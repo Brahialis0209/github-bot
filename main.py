@@ -4,15 +4,19 @@ from ans import Answers
 from user_opts import User
 import logging
 import psycopg2
-from config import *
+# from config import *
 from flask import Flask, request
 import os
 
+logger = telebot.logger
+logger.setLevel(logging.DEBUG)
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+DB_URI = os.getenv("DB_URI")
+APP_URL = os.getenv("APP_URL")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 server = Flask(__name__)
-logger = telebot.logger
-logger.setLevel(logging.DEBUG)
 
 db_connection = psycopg2.connect(DB_URI, sslmode="require")
 db_object = db_connection.cursor()
