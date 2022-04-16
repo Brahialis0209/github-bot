@@ -41,9 +41,10 @@ def start_message(message):
     db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
     if not result:
-        print("GGG1")
-        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %d)", (user_id, username, States.S_START))
+        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %s)", (user_id, username, States.S_START))
         db_connection.commit()
+        print("GGG1")
+
 
 
 @bot.message_handler(commands=['help'])
