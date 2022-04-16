@@ -31,6 +31,8 @@ def get_user_state(user_id):
     print(user_id)
     db_object.execute(f"SELECT user_state FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
+    print(result)
+    print(type(result))
     if not result:
         return -1
     return result
