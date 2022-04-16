@@ -47,10 +47,10 @@ def start_message(message):
     db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
     if not result:
-        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %s)", (user_id, username, States.S_START))
+        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %s)",
+                          (user_id, username, States.S_START))
         db_connection.commit()
         print("GGG1")
-
 
 
 @bot.message_handler(commands=['help'])
@@ -58,32 +58,31 @@ def start_message(message):
     bot.send_message(message.chat.id, Answers.reference_ans, parse_mode='Markdown')
 
 
-
-
 def is_user_add(data):
     return User.user_add in data.split(' ')
-
 
 
 @bot.callback_query_handler(func=lambda call: is_user_add(call.data))
 def query_handler(call):
     print("GGG3")
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                          text="Введите ссылку на пользователя:")
+                          text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
 
 
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
     print("GGG2")
-    r = requests.get('https://api.github.com/user', auth=(github_name, token))
+    r = requests.get('https://api.github.com/user', auth=(message.text, token))
     print(r.status_code)
     if r.status_code == 200:
         dict_data = json.loads(r.text)
         print(dict_data['name'])
         print(dict_data['url'])
-    bot.send_message(message.chat.id, text=message.text)
-
+        bot.send_message(message.chat.id, text="🔘 Логин: {}.\n" \
+                                               "🔘 Url: {}.".format(dict_data['login'], dict_data['url'], ))
+    else:
+        bot.send_message(message.chat.id, text="Такого пользователя найти не удалось, попробуйти ввести правильно.")
 
 
 @bot.message_handler(content_types=['text'])
@@ -106,4 +105,3 @@ if __name__ == "__main__":
     bot.remove_webhook()
     bot.set_webhook(url=APP_URL)
     server.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-

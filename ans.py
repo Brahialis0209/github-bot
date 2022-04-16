@@ -6,7 +6,7 @@ class Answers:
     main_markup = types.ReplyKeyboardMarkup()
     repo_inf = "Получить информацию о репозитории."
     user_inf = "Получить информацию о пользователе."
-    pr_inf = "Получить информацию о о pull request."
+    pr_inf = "Получить информацию о pull request."
     main_markup.row(repo_inf)
     main_markup.row(user_inf)
     main_markup.row(pr_inf)
