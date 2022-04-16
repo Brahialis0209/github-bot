@@ -28,9 +28,7 @@ def update_user_state(user_id, state):
 
 
 def get_user_state(user_id):
-    print(user_id)
-    db_object.execute(f"SELECT user_state FROM tg_users WHERE id = {user_id}")
-    print("d")
+    db_object.execute(f"SELECT user_state FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
     if not result:
         return -1
@@ -84,6 +82,7 @@ def send_text(message):
     print("GGG4")
     if message.text == Answers.user_inf:
         bot.send_message(message.chat.id, User.ans, reply_markup=user_opts.start_kb_for_user())
+        update_user_state(message.from_user.id, States.S_USER_CONTROL)
 
 
 @server.route(f"/{BOT_TOKEN}", methods=["POST"])
