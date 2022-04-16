@@ -28,7 +28,9 @@ def update_user_state(user_id, state):
 
 
 def get_user_state(user_id):
+    print(user_id)
     db_object.execute(f"SELECT user_state FROM tg_users WHERE id = {user_id}")
+    print("d")
     result = db_object.fetchone()
     if not result:
         return -1
