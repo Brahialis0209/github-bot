@@ -12,7 +12,6 @@ class States(Enum):
 
 
 
-# template of callback data: "[name-of-topic].[section].[page-number]"
 def start_kb_for_user():
     start_page = 0
     sect_1_button = types.InlineKeyboardButton(User.choose,
