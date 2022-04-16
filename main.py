@@ -1,7 +1,7 @@
 import telebot
 import user_opts
 from ans import Answers
-from user_opts import User
+from user_opts import User, States
 import logging
 import psycopg2
 # from config import *
@@ -22,6 +22,16 @@ db_connection = psycopg2.connect(DB_URI, sslmode="require")
 db_object = db_connection.cursor()
 
 
+def update_user_state(user_id, state):
+    db_object.execute(f"UPDATE tg_users SET user_state = {state} WHERE tg_user_id = {user_id}")
+    db_connection.commit()
+
+
+def get_user_state(user_id):
+    db_object.execute(f"SELECT user_state FROM tg_users WHERE id = {user_id}")
+    result = db_object.fetchone()
+    return result
+
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
@@ -31,7 +41,7 @@ def start_message(message):
     db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
     if not result:
-        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username) VALUES (%s, %s)", (user_id, username))
+        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %i)", (user_id, username, States.S_START))
         db_connection.commit()
 
 
@@ -57,7 +67,13 @@ def is_user_add(data):
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text="Введите ссылку на пользователя:")
+    update_user_state(call.message.chat.id, States.S_ADD_USER)
 
+
+@bot.message_handler(func=lambda message: get_user_state(message.chat.id) == States.S_ADD_USER)
+def user_adding(message):
+    bot.send_message(message.chat.id, text=message.text)
+    # dbworker.set_state(message.chat.id, config.States.S_ENTER_AGE.value)
 
 
 

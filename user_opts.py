@@ -1,4 +1,15 @@
+from enum import Enum
+
 from telebot import types
+
+
+
+class States(Enum):
+    S_START = 0  # Dialog start
+    S_USER_CONTROL = 1  # user pick user's control
+    S_CHOOSE_USER = 2  # choose usr from db
+    S_ADD_USER = 3  # add new usr
+
 
 
 # template of callback data: "[name-of-topic].[section].[page-number]"
