@@ -7,6 +7,7 @@ import psycopg2
 # from config import *
 from flask import Flask, request
 import os
+import requests
 
 logger = telebot.logger
 logger.setLevel(logging.DEBUG)
@@ -14,6 +15,8 @@ logger.setLevel(logging.DEBUG)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 DB_URI = os.getenv("DB_URI")
 APP_URL = os.getenv("APP_URL")
+token = os.environ.get("GITHUB_TOKEN")
+github_name = os.environ.get("GITHUB_USERNAME")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 server = Flask(__name__)
@@ -72,8 +75,13 @@ def query_handler(call):
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
     print("GGG2")
+    r = requests.get('https://api.github.com/user', auth=(github_name, token))
+    print(r.status_code)
+    if r.status_code == 200:
+        print(r.text)
+        print(type(r.text))
+        print(type(r.json))
     bot.send_message(message.chat.id, text=message.text)
-    # dbworker.set_state(message.chat.id, config.States.S_ENTER_AGE.value)
 
 
 
