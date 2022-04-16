@@ -8,6 +8,7 @@ import psycopg2
 from flask import Flask, request
 import os
 import requests
+import json
 
 logger = telebot.logger
 logger.setLevel(logging.DEBUG)
@@ -78,9 +79,9 @@ def user_adding(message):
     r = requests.get('https://api.github.com/user', auth=(github_name, token))
     print(r.status_code)
     if r.status_code == 200:
-        print(r.text)
-        print(type(r.text))
-        print(type(r.json))
+        dict_data = json.loads(r.text)
+        print(dict_data['name'])
+        print(dict_data['url'])
     bot.send_message(message.chat.id, text=message.text)
 
 
