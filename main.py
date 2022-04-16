@@ -73,14 +73,15 @@ def query_handler(call):
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
     print("GGG2")
-    r = requests.get('https://api.github.com/user', auth=(message.text, token))
+    r = requests.get('https://api.github.com/' + message.text, auth=(github_name, token))
     print(r.status_code)
     if r.status_code == 200:
         dict_data = json.loads(r.text)
         print(dict_data['name'])
         print(dict_data['url'])
-        bot.send_message(message.chat.id, text="🔘 Логин: {}.\n" \
-                                               "🔘 Url: {}.".format(dict_data['login'], dict_data['url'], ))
+        bot.send_message(message.chat.id, text="🔘 Пользователь найден!.\n" \
+                                                "🔘 Логин: {}.\n" \
+                                               "🔘 Аватар: {}.".format(dict_data['login'], dict_data['avatar_url'], ))
     else:
         bot.send_message(message.chat.id, text="Такого пользователя найти не удалось, попробуйти ввести правильно.")
 
