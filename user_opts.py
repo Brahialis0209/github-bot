@@ -1,10 +1,8 @@
-from enum import Enum
-
 from telebot import types
 
 
 
-class States(Enum):
+class States:
     S_START = 0  # Dialog start
     S_USER_CONTROL = 1  # user pick user's control
     S_CHOOSE_USER = 2  # choose usr from db
