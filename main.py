@@ -41,7 +41,7 @@ def start_message(message):
     db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
     if not result:
-        print("GGG")
+        print("GGG1")
         db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %d)", (user_id, username, States.S_START))
         db_connection.commit()
 
@@ -66,6 +66,7 @@ def is_user_add(data):
 
 @bot.callback_query_handler(func=lambda call: is_user_add(call.data))
 def query_handler(call):
+    print("GGG3")
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text="Введите ссылку на пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
@@ -74,6 +75,7 @@ def query_handler(call):
 @bot.message_handler(func=lambda message: get_user_state(message.chat.id) == States.S_ADD_USER)
 def user_adding(message):
     bot.send_message(message.chat.id, text=message.text)
+    print("GGG2")
     # dbworker.set_state(message.chat.id, config.States.S_ENTER_AGE.value)
 
 
