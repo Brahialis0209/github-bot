@@ -30,6 +30,8 @@ def update_user_state(user_id, state):
 def get_user_state(user_id):
     db_object.execute(f"SELECT user_state FROM tg_users WHERE id = {user_id}")
     result = db_object.fetchone()
+    if not result:
+        return -1
     return result
 
 
@@ -67,10 +69,10 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_ADD_USER)
 
 
-@bot.message_handler(func=lambda message: get_user_state(message.chat.id) == States.S_ADD_USER)
+@bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
-    bot.send_message(message.chat.id, text=message.text)
     print("GGG2")
+    bot.send_message(message.chat.id, text=message.text)
     # dbworker.set_state(message.chat.id, config.States.S_ENTER_AGE.value)
 
 
