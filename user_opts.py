@@ -17,11 +17,13 @@ def aliases_kb_for_user(db_object, user_id):
     result = db_object.fetchall()
     len_hist = len(result)
     mark = types.InlineKeyboardMarkup()
+    print("ooo1")
     for i in range(len_hist):
-        mark.row(types.InlineKeyboardButton(result[i],
-                                               callback_data=result[i] + " "))
+        mark.row(types.InlineKeyboardButton(str(result[i]),
+                                               callback_data=str(result[i]) + " "))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=User.back_cal + " " + User.back_cal))
+    print("ooo2")
     return mark
 
 
