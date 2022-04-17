@@ -47,7 +47,7 @@ def get_user_state(user_id):
 def start_message(message):
     user_id = message.from_user.id
     username = message.from_user.username
-    bot.edit_message_text(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+    bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
     db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
     if not result:
@@ -84,7 +84,7 @@ def is_user_control(data):
 @bot.callback_query_handler(func=lambda call: is_user_control(call.data))
 def query_handler(call):
     print("GGG3")
-    bot.edit_message_text(call.message.chat.id, User.ans, reply_markup=user_opts.start_kb_for_user())
+    bot.edit_message_text(call.message.chat.id, text=User.ans, reply_markup=user_opts.start_kb_for_user())
     update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
 
