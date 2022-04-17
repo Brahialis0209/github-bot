@@ -79,7 +79,7 @@ def query_handler(call):
 
 
 def is_user_inf(data):
-    return ans.Answers.user_page in data.split(' ')
+    return ans.Answers.user_control in data.split(' ')
 
 
 @bot.callback_query_handler(func=lambda call: is_user_inf(call.data))
