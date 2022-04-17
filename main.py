@@ -135,11 +135,11 @@ def user_adding(message):
                           (message.from_user.id, gh_username, dict_data['avatar_url']))
         db_connection.commit()
         update_user_state(message.from_user.id, States.S_ALI_USER)
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id,
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.chat.id,
                               text="Введите alias для нового пользователя.")
 
     else:
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id,
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.chat.id,
                               text="Такого пользователя найти не удалось, попробуйти ввести ник правильно.")
 
 
@@ -158,10 +158,10 @@ def alias_adding(message):
         db_connection.commit()
         print("GGG8")
         update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, reply_markup=ans.user_ali_added_kb(alias),
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
                          text="Пользователь {} добавлен.".format(message.text))
     else:
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id,
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.chat.id,
                               text="Такой alias уже есть. Введите уникальный.")
 
 
