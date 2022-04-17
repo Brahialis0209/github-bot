@@ -102,8 +102,9 @@ def user_adding(message):
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER)
 def alias_adding(message):
     user_id = message.from_user.id
+    alias = message.text[:-2]
     print(message.text)
-    db_object.execute(f"SELECT gh_user_id FROM gh_users WHERE tg_alias_user = {message.text}")
+    db_object.execute(f"SELECT gh_user_id FROM gh_users WHERE tg_alias_user = {alias}")
     result = db_object.fetchone()
     print("GGG6")
     if not result:
