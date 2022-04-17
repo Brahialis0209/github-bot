@@ -4,11 +4,11 @@ from telebot import types
 
 class Answers:
     main_markup = types.ReplyKeyboardMarkup()
-    repo_inf = "Получить информацию о репозитории."
+    repo_inf = "Получить информацию о репозитории. (В разработке)"
     user_inf = "Получить информацию о пользователе."
-    pr_inf = "Получить информацию о pull request."
-    main_markup.row(repo_inf)
+    pr_inf = "Получить информацию о pull request.(В разработке)"
     main_markup.row(user_inf)
+    main_markup.row(repo_inf)
     main_markup.row(pr_inf)
 
     back = "Назад"

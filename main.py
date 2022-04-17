@@ -4,7 +4,6 @@ from ans import Answers
 from user_opts import User, States
 import logging
 import psycopg2
-# from config import *
 from flask import Flask, request
 import os
 import requests
@@ -17,7 +16,6 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 DB_URI = os.getenv("DB_URI")
 APP_URL = os.getenv("APP_URL")
 token = os.environ.get("GITHUB_TOKEN")
-github_name = os.environ.get("GITHUB_USERNAME")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 server = Flask(__name__)
@@ -79,14 +77,40 @@ def user_adding(message):
     print(r.status_code)
     if r.status_code == 200:
         dict_data = json.loads(r.text)
-        # print(dict_data['name'])
+        # # print(dict_data['name'])
         # print(dict_data['url'])
-        bot.send_message(message.chat.id, text="🔘 Пользователь найден!\n" \
-                                                "🔘 Логин: {}.\n" \
-                                               "🔘 Аватар: {}.".format(dict_data['login'], dict_data['avatar_url'], ))
-    else:
-        bot.send_message(message.chat.id, text="Такого пользователя найти не удалось, попробуйти ввести правильно.")
+        # bot.send_message(message.chat.id, text="Пользователь найден!\n" \
+        #                                         "🔘 Логин: {}.\n" \
+        #                                        "🔘 Аватар: {}.".format(dict_data['login'], dict_data['avatar_url'], ))
+        gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
+        db_object.execute("INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar) VALUES (%s, %s, %s)",
+                          (message.from_user.id, gh_username, dict_data['avatar_url']))
+        db_connection.commit()
+        print("GGG3")
+        update_user_state(message.from_user.id, States.S_ALI_USER)
+        print("GGG4")
+        bot.send_message(message.chat.id, text="Введите alias для нового пользователя.")
+        print("GGG5")
 
+    else:
+        bot.send_message(message.chat.id, text="Такого пользователя найти не удалось, попробуйти ввести ник правильно.")
+
+
+
+@bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER)
+def alias_adding(message):
+    user_id = message.from_user.id
+    db_object.execute(f"SELECT gh_user_id FROM gh_users WHERE tg_alias_user = {message.text}")
+    result = db_object.fetchone()
+    print("GGG6")
+    if not result:
+        bot.send_message(message.chat.id, text="Такой alias уже есть. Введите уникальный.")
+    else:
+        print("GGG7")
+        db_object.execute(f"UPDATE gh_users SET tg_alias_user = {message.text} WHERE tg_user_id = {user_id} AND tg_alias_user = null")
+        db_connection.commit()
+        print("GGG8")
+        bot.send_message(message.chat.id, text="Пользователь {} добавлен.".format(message.text))
 
 @bot.message_handler(content_types=['text'])
 def send_text(message):
