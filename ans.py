@@ -3,11 +3,11 @@ from telebot import types
 
 def start_kb_for_all():
     sect_1_button = types.InlineKeyboardButton(Answers.user_inf,
-                                               callback_data=Answers.user_control + " " + str(Answers.start_page))
+                                               callback_data=Answers.user_control + " " + str(Answers.user_page))
     sect_2_button = types.InlineKeyboardButton(Answers.repo_inf,
-                                               callback_data=Answers.repo_control + " " + str(Answers.start_page))
+                                               callback_data=Answers.repo_control + " " + str(Answers.repo_page))
     sect_3_button = types.InlineKeyboardButton(Answers.pr_inf,
-                                               callback_data=Answers.pr_control + " " + str(Answers.start_page))
+                                               callback_data=Answers.pr_control + " " + str(Answers.pr_page))
     start_mark = types.InlineKeyboardMarkup()
     start_mark.row(sect_1_button)
     start_mark.row(sect_2_button)
