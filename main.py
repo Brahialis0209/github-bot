@@ -79,7 +79,9 @@ def query_handler(call):
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
                                               and len(call.data.split(" ")) < 2)
 def query_handler(call):
+    print("fff")
     alias = call.data.split(" ")[0]
+    print(alias)
     user_id = call.message.chat.id
     db_object.execute(
         f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
