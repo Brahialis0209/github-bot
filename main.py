@@ -93,18 +93,28 @@ def query_handler(call):
 def is_user_ali_added(data):
     return ans.Answers.ali_user_added_cal in data.split(' ')
 
-
 @bot.callback_query_handler(func=lambda call: is_user_ali_added(call.data))
 def query_handler(call):
-    user_id = call.data.split(' ')[-1]
-    alias = call.data.split(' ')[-2]
+    user_id = call.message.chat.id
+    alias = call.data.split(' ')[-1]
     print(user_id)
     print(alias)
     db_object.execute(f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
-    bot.send_message(call.message.chat.id, text="🔘 Имя: {}.\n" \
+    bot.send_message(call.message.chat.id, text="🔘 Имя: {}\n" \
                                            "🔘 Аватар: {}.".format(result[0], result[1] ))
+    bot.send_message(call.message.chat.id, reply_markup=ans.back_to_menu_kb(), text="")
     # update_user_state(call.message.chat.id, States.S_USER_CONTROL)
+
+
+
+def is_back_to_menu(data):
+    return ans.Answers.back_to_menu_cal in data.split(' ')
+
+@bot.callback_query_handler(func=lambda call: is_back_to_menu(call.data))
+def query_handler(call):
+    update_user_state(call.message.chat.id, States.S_START)
+    bot.send_message(call.message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
 
 # END callback.handlers
 
@@ -118,11 +128,6 @@ def user_adding(message):
     print(r.status_code)
     if r.status_code == 200:
         dict_data = json.loads(r.text)
-        # # print(dict_data['name'])
-        # print(dict_data['url'])
-        # bot.send_message(message.chat.id, text="Пользователь найден!\n" \
-        #                                         "🔘 Логин: {}.\n" \
-        #                                        "🔘 Аватар: {}.".format(dict_data['login'], dict_data['avatar_url'], ))
         gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
         db_object.execute("INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar) VALUES (%s, %s, %s)",
                           (message.from_user.id, gh_username, dict_data['avatar_url']))
@@ -154,8 +159,9 @@ def alias_adding(message):
         db_connection.commit()
         print("GGG8")
         update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
-        bot.send_message(message.chat.id, reply_markup=ans.user_ali_added_kb(user_id, alias),
+        bot.send_message(message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
                          text="Пользователь {} добавлен.".format(message.text))
+        bot.send_message(message.chat.id, reply_markup=ans.back_to_menu_kb(), text="")
     else:
         bot.send_message(message.chat.id, text="Такой alias уже есть. Введите уникальный.")
 

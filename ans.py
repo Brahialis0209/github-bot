@@ -16,17 +16,20 @@ def start_kb_for_all():
     return start_mark
 
 
-def user_ali_added_kb(user_id, alias):
+def user_ali_added_kb(alias):
     sect_1_button = types.InlineKeyboardButton(Answers.ali_user_added_inf,
-                                               callback_data=Answers.ali_user_added_cal + " " + str(alias) + " " + str(user_id))
-    sect_2_button = types.InlineKeyboardButton(Answers.back_to_menu_inf,
-                                               callback_data=Answers.back_to_menu_cal + " ")
+                                               callback_data=Answers.ali_user_added_cal + " " + str(alias))
 
     user_ali_added_mark = types.InlineKeyboardMarkup()
     user_ali_added_mark.row(sect_1_button)
-    user_ali_added_mark.row(sect_2_button)
     return user_ali_added_mark
 
+def back_to_menu_kb():
+    button = types.InlineKeyboardButton(Answers.back_to_menu_inf,
+                                               callback_data=Answers.back_to_menu_cal + " ")
+    mark = types.InlineKeyboardMarkup()
+    mark.row(button)
+    return mark
 
 class Answers:
     ali_user_added_inf = "Вывести информацию о пользователе."
