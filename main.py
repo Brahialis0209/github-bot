@@ -48,7 +48,7 @@ def start_message(message):
     user_id = message.from_user.id
     username = message.from_user.username
     # bot.send_message(message.chat.id, Answers.start_ans, reply_markup=Answers.start_markup, parse_mode='markdown')
-    bot.send_message(message.chat.id, User.ans, reply_markup=ans.start_kb_for_all())
+    bot.send_message(message.chat.id, User.ans, reply_markup=ans.start_kb_for_all(), parse_mode='markdown')
     db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
     if not result:
