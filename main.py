@@ -103,7 +103,7 @@ def query_handler(call):
     result = db_object.fetchone()
     bot.send_message(call.message.chat.id, text="🔘 Имя: {}\n" \
                                            "🔘 Аватар: {}.".format(result[0], result[1] ))
-    bot.send_message(call.message.chat.id, reply_markup=ans.back_to_menu_kb(), text="")
+    bot.send_message(call.message.chat.id, reply_markup=ans.back_to_menu_kb(), text=" ")
     # update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
 
