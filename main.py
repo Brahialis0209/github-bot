@@ -100,7 +100,7 @@ def query_handler(call):
     alias = call.data.split(' ')[-2]
     print(user_id)
     print(alias)
-    db_object.execute(f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE th_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
+    db_object.execute(f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     bot.send_message(call.message.chat.id, text="🔘 Имя: {}.\n" \
                                            "🔘 Аватар: {}.".format(result[0], result[1] ))
@@ -153,9 +153,9 @@ def alias_adding(message):
             f"UPDATE gh_users SET tg_alias_user = '{alias}' WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
         db_connection.commit()
         print("GGG8")
-        bot.send_message(message.chat.id, text="Пользователь {} добавлен.".format(message.text))
         update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
-        bot.send_message(message.chat.id, reply_markup=ans.user_ali_added_kb(user_id, alias), text="Меню.")
+        bot.send_message(message.chat.id, reply_markup=ans.user_ali_added_kb(user_id, alias),
+                         text="Пользователь {} добавлен.".format(message.text))
     else:
         bot.send_message(message.chat.id, text="Такой alias уже есть. Введите уникальный.")
 
