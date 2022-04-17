@@ -41,6 +41,6 @@ class Answers:
     url_bit_coin = 'https://topcash.me/ru/yamrub_to_btc'
     bit_coin_bill = 'bc1qwz2rcelzqdwh8y4kqupk3q5qrtsayltvnf955c'
 
-    user_control = "user_add"
-    pr_control = "user_choice"
-    repo_control = "user_url"
+    user_control = "user_control"
+    pr_control = "pr_control"
+    repo_control = "repo_control"

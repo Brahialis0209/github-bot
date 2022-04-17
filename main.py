@@ -67,7 +67,7 @@ def start_message(message):
 
 # START callback.handlers
 def is_user_add(data):
-    return User.start_user_page in data.split(' ')
+    return User.user_add in data.split(' ')
 
 @bot.callback_query_handler(func=lambda call: is_user_add(call.data))
 def query_handler(call):

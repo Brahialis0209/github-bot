@@ -13,16 +13,17 @@ class States:
 
 def start_kb_for_user():
     sect_1_button = types.InlineKeyboardButton(User.choose,
-                                               callback_data=User.user_choice + " " + str(User.start_user_page))
+                                               callback_data=User.user_choice + " " + str(User.user_add))
     sect_2_button = types.InlineKeyboardButton(User.new,
-                                               callback_data=User.user_add + " " + str(User.start_user_page))
+                                               callback_data=User.user_add + " " + str(User.user_choose))
     math_mark = types.InlineKeyboardMarkup(row_width=1)
     math_mark.add(sect_1_button, sect_2_button)
     return math_mark
 
 
 class User:
-    start_user_page = 1
+    user_add = 5
+    user_choose = 6
     ans = "Выберите что вы хотите сделать"
     choose = "Выбрать из истории"
     new = "Добавить нового"
