@@ -17,7 +17,9 @@ def start_kb_for_all():
 
 
 class Answers:
-    start_page = 0
+    user_page = 1
+    repo_page = 2
+    pr_page = 3
     start_markup = types.ReplyKeyboardMarkup()
     start_inf = "Старт"
     # start_markup.row(start_inf)
