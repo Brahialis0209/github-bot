@@ -2,19 +2,19 @@ from telebot import types
 
 
 def start_kb_for_all():
-    start_page = 0
     sect_1_button = types.InlineKeyboardButton(Answers.user_inf,
-                                               callback_data=Answers.user_inf + " " + str(start_page))
+                                               callback_data=Answers.user_inf + " " + str(Answers.start_page))
     sect_2_button = types.InlineKeyboardButton(Answers.repo_inf,
-                                               callback_data=Answers.repo_inf + " " + str(start_page))
+                                               callback_data=Answers.repo_inf + " " + str(Answers.start_page))
     sect_3_button = types.InlineKeyboardButton(Answers.pr_inf,
-                                               callback_data=Answers.pr_inf + " " + str(start_page))
-    start_mark = types.InlineKeyboardMarkup(row_width=1)
+                                               callback_data=Answers.pr_inf + " " + str(Answers.start_page))
+    start_mark = types.InlineKeyboardMarkup()
     start_mark.add(sect_1_button, sect_2_button, sect_3_button)
     return start_mark
 
 
 class Answers:
+    start_page = 0
     start_markup = types.ReplyKeyboardMarkup()
     start_inf = "Старт"
     start_markup.row(start_inf)
