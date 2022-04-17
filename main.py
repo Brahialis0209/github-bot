@@ -86,7 +86,7 @@ def user_adding(message):
         db_object.execute("INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar) VALUES (%s, %s, %s)",
                           (message.from_user.id, gh_username, dict_data['avatar_url']))
         db_connection.commit()
-        print("GGG3")
+        print("GGgG3")
         update_user_state(message.from_user.id, States.S_ALI_USER)
         print("GGG4")
         bot.send_message(message.chat.id, text="Введите alias для нового пользователя.")
