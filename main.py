@@ -30,8 +30,10 @@ def update_user_state(user_id, state):
 
 
 def get_user_state(user_id):
+    print(user_id)
     db_object.execute(f"SELECT user_state FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
+    print(result)
     if not result:
         return -1
     return result[0]  # (state,)
@@ -101,9 +103,10 @@ def user_adding(message):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = message.text
-    db_object.execute('SELECT gh_username FROM gh_users WHERE tg_alias_user = %s' % (alias))
+    print(message.text)
+    db_object.execute(f"SELECT gh_username FROM gh_users WHERE tg_alias_user = '{alias}'")
     result = db_object.fetchone()
-    print("GGGd6")
+    print("GGG6")
     if not result:
         bot.send_message(message.chat.id, text="Такой alias уже есть. Введите уникальный.")
     else:
