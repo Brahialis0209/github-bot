@@ -86,7 +86,7 @@ def user_adding(message):
         #                                        "🔘 Аватар: {}.".format(dict_data['login'], dict_data['avatar_url'], ))
         gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
         db_object.execute("INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar) VALUES (%s, %s, %s)",
-                          (message.from_user.id, gh_username, dict_data['avatar_url']))
+                          (message.from_user.id, gh_username.lower(), dict_data['avatar_url']))
         db_connection.commit()
         print("GGgG3")
         update_user_state(message.from_user.id, States.S_ALI_USER)
@@ -102,9 +102,8 @@ def user_adding(message):
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER)
 def alias_adding(message):
     user_id = message.from_user.id
-    alias = message.text[:-2]
-    print(message.text)
-    db_object.execute(f"SELECT 'gh_user_id' FROM gh_users WHERE tg_alias_user = {alias}")
+    alias = message.text
+    db_object.execute(f"SELECT gh_user_id FROM gh_users WHERE tg_alias_user = {alias}")
     result = db_object.fetchone()
     print("GGG6")
     if not result:
