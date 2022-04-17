@@ -102,8 +102,9 @@ def query_handler(call):
     db_object.execute(f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
-                                           "🔘 Аватар: {}.".format(result[0], result[1] ))
-    # bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                           "🔘 Аватар: {}.".format(result[0], result[1] ),
+                          reply_markup=ans.back_to_menu_kb())
+    # bot.send_message(chat_id=call.message.chat.id,
     #                  reply_markup=ans.back_to_menu_kb(), text="Меню.")
     # update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
