@@ -68,7 +68,7 @@ def start_message(message):
 
 # "back" when we choosen alias
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
-                                              and len(call.data.split(" ")) == 2)
+                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_user())
@@ -77,11 +77,9 @@ def query_handler(call):
 
 #  we pick alias from list
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
-                                              and len(call.data.split(" ")) < 2)
+                                              and call.data.split(" ")[-1] != user_opts.User.back_cal)
 def query_handler(call):
-    print("fff")
     alias = call.data.split(" ")[0]
-    print(alias)
     user_id = call.message.chat.id
     db_object.execute(
         f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
