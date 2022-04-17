@@ -103,7 +103,7 @@ def user_adding(message):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = message.text
-    db_object.execute(f"SELECT gh_user_id FROM gh_users WHERE tg_alias_user = {alias}")
+    db_object.execute(f"SELECT gh_user_id FROM gh_users WHERE tg_alias_user = %s", 'sssss')
     result = db_object.fetchone()
     print("GGG6")
     if not result:
