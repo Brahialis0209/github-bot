@@ -30,10 +30,8 @@ def update_user_state(user_id, state):
 
 
 def get_user_state(user_id):
-    print(user_id)
     db_object.execute(f"SELECT user_state FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
-    print(result)
     if not result:
         return -1
     return result[0]  # (state,)
@@ -86,7 +84,7 @@ def user_adding(message):
         #                                        "🔘 Аватар: {}.".format(dict_data['login'], dict_data['avatar_url'], ))
         gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
         db_object.execute("INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar) VALUES (%s, %s, %s)",
-                          (message.from_user.id, gh_username.lower(), dict_data['avatar_url']))
+                          (message.from_user.id, gh_username, dict_data['avatar_url']))
         db_connection.commit()
         print("GGgG3")
         update_user_state(message.from_user.id, States.S_ALI_USER)
@@ -103,7 +101,7 @@ def user_adding(message):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = message.text
-    db_object.execute(f"SELECT gh_user_id FROM gh_users WHERE tg_alias_user = %s", (alias))
+    db_object.execute(f"SELECT gh_username FROM gh_users WHERE tg_alias_user = {alias}")
     result = db_object.fetchone()
     print("GGG6")
     if not result:
@@ -112,7 +110,7 @@ def alias_adding(message):
         print("GGG7")
         db_object.execute(f"UPDATE gh_users SET tg_alias_user = {message.text} WHERE tg_user_id = {user_id} AND tg_alias_user = null")
         db_connection.commit()
-        print("GGgG8")
+        print("GGG8")
         bot.send_message(message.chat.id, text="Пользователь {} добавлен.".format(message.text))
 
 @bot.message_handler(content_types=['text'])
