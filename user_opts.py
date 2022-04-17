@@ -12,7 +12,7 @@ class States:
 
 
 def start_kb_for_user():
-    start_page = 0
+    start_page = 1
     sect_1_button = types.InlineKeyboardButton(User.choose,
                                                callback_data=User.user_choice + " " + str(start_page))
     sect_2_button = types.InlineKeyboardButton(User.new,

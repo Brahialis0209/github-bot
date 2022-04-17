@@ -1,4 +1,6 @@
 import telebot
+
+import ans
 import user_opts
 from ans import Answers
 from user_opts import User, States
@@ -8,6 +10,7 @@ from flask import Flask, request
 import os
 import requests
 import json
+
 
 logger = telebot.logger
 logger.setLevel(logging.DEBUG)
@@ -39,11 +42,13 @@ def get_user_state(user_id):
     return result[0]  # (state,)
 
 
+
 @bot.message_handler(commands=['start'])
 def start_message(message):
     user_id = message.from_user.id
     username = message.from_user.username
-    bot.send_message(message.chat.id, Answers.start_ans, reply_markup=Answers.main_markup, parse_mode='markdown')
+    # bot.send_message(message.chat.id, Answers.start_ans, reply_markup=Answers.start_markup, parse_mode='markdown')
+    bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
     db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
     if not result:
@@ -58,9 +63,11 @@ def start_message(message):
     bot.send_message(message.chat.id, Answers.reference_ans, parse_mode='Markdown')
 
 
+
+
+# START callback.handlers
 def is_user_add(data):
     return User.user_add in data.split(' ')
-
 
 @bot.callback_query_handler(func=lambda call: is_user_add(call.data))
 def query_handler(call):
@@ -68,6 +75,19 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
+
+
+def is_user_inf(data):
+    return ans.Answers.user_inf in data.split(' ')
+
+
+@bot.callback_query_handler(func=lambda call: is_user_inf(call.data))
+def query_handler(call):
+    print("GGG3")
+    bot.send_message(call.message.chat.id, User.ans, reply_markup=user_opts.start_kb_for_user())
+    update_user_state(call.message.chat.id, States.S_USER_CONTROL)
+
+# END callback.handlers
 
 
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
@@ -119,12 +139,12 @@ def alias_adding(message):
         bot.send_message(message.chat.id, text="Такой alias уже есть. Введите уникальный.")
 
 
-@bot.message_handler(content_types=['text'])
-def send_text(message):
-    print("GGG4")
-    if message.text == Answers.user_inf:
-        bot.send_message(message.chat.id, User.ans, reply_markup=user_opts.start_kb_for_user())
-        update_user_state(message.from_user.id, States.S_USER_CONTROL)
+# @bot.message_handler(content_types=['text'])
+# def send_text(message):
+#     print("GGG4")
+    # if message.text == Answers.user_inf:
+    #     bot.send_message(message.chat.id, User.ans, reply_markup=user_opts.start_kb_for_user())
+    #     update_user_state(message.from_user.id, States.S_USER_CONTROL)
 
 
 @server.route(f"/{BOT_TOKEN}", methods=["POST"])
