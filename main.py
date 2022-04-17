@@ -91,6 +91,7 @@ def query_handler(call):
                                                                                                  "🔘 Аватар: {}.".format(
         result[0], result[1]),
                           reply_markup=ans.back_to_menu_kb())
+    update_user_state(call.message.chat.id, States.S_START)
 
 
 
