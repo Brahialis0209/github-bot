@@ -109,7 +109,7 @@ def alias_adding(message):
     print("GGG6")
     null = "NULL"
     if not result:
-        print("GGG7")
+        print("GGfG7")
         db_object.execute(
             f"UPDATE gh_users SET tg_alias_user = '{message.text}' WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
         db_connection.commit()
