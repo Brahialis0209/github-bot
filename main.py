@@ -77,6 +77,7 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_ADD_USER)
 
 
+
 def is_user_inf(data):
     return ans.Answers.user_inf in data.split(' ')
 

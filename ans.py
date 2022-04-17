@@ -3,11 +3,11 @@ from telebot import types
 
 def start_kb_for_all():
     sect_1_button = types.InlineKeyboardButton(Answers.user_inf,
-                                               callback_data=Answers.user_inf + " " + str(Answers.start_page))
+                                               callback_data=Answers.user_control + " " + str(Answers.start_page))
     sect_2_button = types.InlineKeyboardButton(Answers.repo_inf,
-                                               callback_data=Answers.repo_inf + " " + str(Answers.start_page))
+                                               callback_data=Answers.repo_control + " " + str(Answers.start_page))
     sect_3_button = types.InlineKeyboardButton(Answers.pr_inf,
-                                               callback_data=Answers.pr_inf + " " + str(Answers.start_page))
+                                               callback_data=Answers.pr_control + " " + str(Answers.start_page))
     start_mark = types.InlineKeyboardMarkup()
     start_mark.row(sect_1_button)
     start_mark.row(sect_2_button)
@@ -38,3 +38,7 @@ class Answers:
     url_team_leader = 'https://t.me/dont_open'
     url_bit_coin = 'https://topcash.me/ru/yamrub_to_btc'
     bit_coin_bill = 'bc1qwz2rcelzqdwh8y4kqupk3q5qrtsayltvnf955c'
+
+    user_control = "user_add"
+    pr_control = "user_choice"
+    repo_control = "user_url"
