@@ -84,7 +84,8 @@ def is_user_control(data):
 @bot.callback_query_handler(func=lambda call: is_user_control(call.data))
 def query_handler(call):
     print("GGG3")
-    bot.edit_message_text(call.message.chat.id, text=User.ans, reply_markup=user_opts.start_kb_for_user())
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.start_kb_for_user())
     update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
 
@@ -100,9 +101,10 @@ def query_handler(call):
     print(alias)
     db_object.execute(f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
-    bot.send_message(call.message.chat.id, text="🔘 Имя: {}\n" \
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
                                            "🔘 Аватар: {}.".format(result[0], result[1] ))
-    bot.send_message(call.message.chat.id, reply_markup=ans.back_to_menu_kb(), text="Вернуться в меню.")
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                     reply_markup=ans.back_to_menu_kb(), text="Меню.")
     # update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
 
@@ -113,7 +115,8 @@ def is_back_to_menu(data):
 @bot.callback_query_handler(func=lambda call: is_back_to_menu(call.data))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
-    bot.edit_message_text(call.message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
 
 # END callback.handlers
 
@@ -132,10 +135,12 @@ def user_adding(message):
                           (message.from_user.id, gh_username, dict_data['avatar_url']))
         db_connection.commit()
         update_user_state(message.from_user.id, States.S_ALI_USER)
-        bot.send_message(message.chat.id, text="Введите alias для нового пользователя.")
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id,
+                              text="Введите alias для нового пользователя.")
 
     else:
-        bot.send_message(message.chat.id, text="Такого пользователя найти не удалось, попробуйти ввести ник правильно.")
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id,
+                              text="Такого пользователя найти не удалось, попробуйти ввести ник правильно.")
 
 
 
@@ -153,10 +158,11 @@ def alias_adding(message):
         db_connection.commit()
         print("GGG8")
         update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
-        bot.send_message(message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, reply_markup=ans.user_ali_added_kb(alias),
                          text="Пользователь {} добавлен.".format(message.text))
     else:
-        bot.send_message(message.chat.id, text="Такой alias уже есть. Введите уникальный.")
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id,
+                              text="Такой alias уже есть. Введите уникальный.")
 
 
 @bot.message_handler(content_types=['text'])
