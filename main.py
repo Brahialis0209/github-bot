@@ -103,7 +103,7 @@ def query_handler(call):
     result = db_object.fetchone()
     bot.send_message(call.message.chat.id, text="🔘 Имя: {}\n" \
                                            "🔘 Аватар: {}.".format(result[0], result[1] ))
-    bot.send_message(call.message.chat.id, reply_markup=ans.back_to_menu_kb(), text=" ")
+    bot.send_message(call.message.chat.id, reply_markup=ans.back_to_menu_kb(), text="Вернуться в меню.")
     # update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
 
@@ -161,7 +161,6 @@ def alias_adding(message):
         update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
         bot.send_message(message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
                          text="Пользователь {} добавлен.".format(message.text))
-        bot.send_message(message.chat.id, reply_markup=ans.back_to_menu_kb(), text=" ")
     else:
         bot.send_message(message.chat.id, text="Такой alias уже есть. Введите уникальный.")
 

@@ -19,9 +19,13 @@ def start_kb_for_all():
 def user_ali_added_kb(alias):
     sect_1_button = types.InlineKeyboardButton(Answers.ali_user_added_inf,
                                                callback_data=Answers.ali_user_added_cal + " " + str(alias))
+    button = types.InlineKeyboardButton(Answers.back_to_menu_inf,
+                                        callback_data=Answers.back_to_menu_cal + " ")
 
     user_ali_added_mark = types.InlineKeyboardMarkup()
     user_ali_added_mark.row(sect_1_button)
+    user_ali_added_mark.row(button)
+
     return user_ali_added_mark
 
 def back_to_menu_kb():
