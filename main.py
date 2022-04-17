@@ -107,11 +107,11 @@ def alias_adding(message):
     db_object.execute(f"SELECT gh_username FROM gh_users WHERE tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     print("GGG6")
-    null = '<null>'
+    null = "null"
     if not result:
         print("GGG7")
         db_object.execute(
-            f"UPDATE gh_users SET tg_alias_user = '{message.text}' WHERE tg_user_id = '{user_id}' AND tg_alias_user = {null}")
+            f"UPDATE gh_users SET tg_alias_user = '{message.text}' WHERE tg_user_id = '{user_id}' AND tg_alias_user = {None}")
         db_connection.commit()
         print("GGG8")
         bot.send_message(message.chat.id, text="Пользователь {} добавлен.".format(message.text))
