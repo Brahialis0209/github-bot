@@ -12,7 +12,6 @@ def start_kb_for_all():
     start_mark.row(sect_1_button)
     start_mark.row(sect_2_button)
     start_mark.row(sect_3_button)
-    # start_mark.add(sect_1_button, sect_2_button, sect_3_button)
     return start_mark
 
 
@@ -21,12 +20,11 @@ def user_ali_added_kb(alias):
                                                callback_data=Answers.ali_user_added_cal + " " + str(alias))
     button = types.InlineKeyboardButton(Answers.back_to_menu_inf,
                                         callback_data=Answers.back_to_menu_cal + " ")
-
     user_ali_added_mark = types.InlineKeyboardMarkup()
     user_ali_added_mark.row(sect_1_button)
     user_ali_added_mark.row(button)
-
     return user_ali_added_mark
+
 
 def back_to_menu_kb():
     button = types.InlineKeyboardButton(Answers.back_to_menu_inf,
@@ -46,7 +44,6 @@ class Answers:
     pr_page = 3
     start_markup = types.ReplyKeyboardMarkup()
     start_inf = "Старт"
-    # start_markup.row(start_inf)
     back_to_menu_inf = "Вернуться в главное меню."
     repo_inf = "Получить информацию о репозитории. (В разработке)"
     user_inf = "Получить информацию о пользователе."
@@ -60,11 +57,6 @@ class Answers:
     start_ans = "Приветствую. Бот позволяет найти информацию о пользователях, репозиториях и пулл-реквестах GitHub."
 
     reference_ans = "Шаблон(скоро добавить)"
-
-    url_donate_path = 'https://money.yandex.ru/to/4100111962148422'
-    url_team_leader = 'https://t.me/dont_open'
-    url_bit_coin = 'https://topcash.me/ru/yamrub_to_btc'
-    bit_coin_bill = 'bc1qwz2rcelzqdwh8y4kqupk3q5qrtsayltvnf955c'
 
     user_control = "user_control"
     pr_control = "pr_control"

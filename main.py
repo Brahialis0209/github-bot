@@ -54,7 +54,6 @@ def start_message(message):
         db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %s)",
                           (user_id, username, States.S_START))
         db_connection.commit()
-        print("GGG1")
 
 
 @bot.message_handler(commands=['help'])
@@ -79,16 +78,13 @@ def query_handler(call):
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
                                               and call.data.split(" ")[-1] != user_opts.User.back_cal)
 def query_handler(call):
-    print("ddd____________________-dddddddddddd")
-    print(call.data)
     alias = call.data.split(" ")[0]
-    print(alias)
     user_id = call.message.chat.id
     db_object.execute(
         f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
-                                                                                                 "🔘 Аватар: {}.".format(
+                                                                                                 "🔘 Аватар: {}".format(
         result[0], result[1]),
                           reply_markup=ans.back_to_menu_kb())
     update_user_state(call.message.chat.id, States.S_START)
@@ -111,7 +107,6 @@ def is_user_add(data):
 #  we pick add user
 @bot.callback_query_handler(func=lambda call: is_user_add(call.data))
 def query_handler(call):
-    print("GGG3")
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
@@ -124,7 +119,6 @@ def is_user_control(data):
 #  we pick user control (1 step)
 @bot.callback_query_handler(func=lambda call: is_user_control(call.data))
 def query_handler(call):
-    print("GGG3")
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_user())
     update_user_state(call.message.chat.id, States.S_USER_CONTROL)
@@ -147,8 +141,6 @@ def query_handler(call):
                           reply_markup=ans.back_to_menu_kb())
 
 
-
-
 def is_back_to_menu(data):
     return ans.Answers.back_to_menu_cal in data.split(' ')
 #  pick back to main menu
@@ -163,7 +155,6 @@ def query_handler(call):
 
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
-    print("GGgG2")
     query_url = f"https://api.github.com/users/{message.text}"
     headers = {'Authorization': f'token {token}'}
     r = requests.get(query_url, headers=headers)
@@ -188,15 +179,12 @@ def user_adding(message):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = message.text
-    print(message.text)
     db_object.execute(f"SELECT gh_username FROM gh_users WHERE tg_alias_user = '{alias}'")
     result = db_object.fetchone()
-    print("GGG6")
     if not result:
         db_object.execute(
             f"UPDATE gh_users SET tg_alias_user = '{alias}' WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
         db_connection.commit()
-        print("GGG8")
         update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
                          text="Пользователь {} добавлен.".format(message.text))
@@ -205,9 +193,10 @@ def alias_adding(message):
                               text="Такой alias уже есть. Введите уникальный.")
 
 
+
+#  REMOVE
 @bot.message_handler(content_types=['text'])
 def send_text(message):
-    print("GGG4")
     bot.send_message(message.chat.id, User.ans, reply_markup=user_opts.start_kb_for_user())
 
 
