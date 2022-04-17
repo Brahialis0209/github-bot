@@ -65,9 +65,46 @@ def start_message(message):
 
 
 # START callback.handlers
+
+# "back" when we choosen alias
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
+                                              and len(call.data.split(" ")) == 2)
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.start_kb_for_user())
+    update_user_state(call.message.chat.id, States.S_USER_CONTROL)
+
+
+#  we pick alias from list
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
+                                              and len(call.data.split(" ")) < 2)
+def query_handler(call):
+    alias = call.data.split(" ")[0]
+    user_id = call.message.chat.id
+    db_object.execute(
+        f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
+    result = db_object.fetchone()
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
+                                                                                                 "🔘 Аватар: {}.".format(
+        result[0], result[1]),
+                          reply_markup=ans.back_to_menu_kb())
+
+
+
+def is_user_choose(data):
+    return User.user_choice in data.split(' ')
+#  we pick check history of aliases
+@bot.callback_query_handler(func=lambda call: is_user_choose(call.data))
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
+    update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
+
+
+
 def is_user_add(data):
     return User.user_add in data.split(' ')
-
+#  we pick add user
 @bot.callback_query_handler(func=lambda call: is_user_add(call.data))
 def query_handler(call):
     print("GGG3")
@@ -80,7 +117,7 @@ def query_handler(call):
 def is_user_control(data):
     return ans.Answers.user_control in data.split(' ')
 
-
+#  we pick user control (1 step)
 @bot.callback_query_handler(func=lambda call: is_user_control(call.data))
 def query_handler(call):
     print("GGG3")
@@ -92,7 +129,7 @@ def query_handler(call):
 
 def is_user_ali_added(data):
     return ans.Answers.ali_user_added_cal in data.split(' ')
-
+#  we enter new alias
 @bot.callback_query_handler(func=lambda call: is_user_ali_added(call.data))
 def query_handler(call):
     user_id = call.message.chat.id
@@ -104,15 +141,13 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
                                            "🔘 Аватар: {}.".format(result[0], result[1] ),
                           reply_markup=ans.back_to_menu_kb())
-    # bot.send_message(chat_id=call.message.chat.id,
-    #                  reply_markup=ans.back_to_menu_kb(), text="Меню.")
-    # update_user_state(call.message.chat.id, States.S_USER_CONTROL)
+
 
 
 
 def is_back_to_menu(data):
     return ans.Answers.back_to_menu_cal in data.split(' ')
-
+#  pick back to main menu
 @bot.callback_query_handler(func=lambda call: is_back_to_menu(call.data))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)

@@ -11,6 +11,20 @@ class States:
     S_ALI_USER_ADDED = 5  # added user alias
 
 
+def aliases_kb_for_user(db_object, user_id):
+    db_object.execute(
+        f"SELECT tg_alias_user FROM gh_users WHERE tg_user_id = '{user_id}'")
+    result = db_object.fetchall()
+    len_hist = len(result)
+    mark = types.InlineKeyboardMarkup()
+    for i in range(len_hist):
+        mark.row(types.InlineKeyboardButton(result[i],
+                                               callback_data=result[i] + " "))
+    mark.row(types.InlineKeyboardButton(User.back_inf,
+                                        callback_data=User.back_cal + " " + User.back_cal))
+    return mark
+
+
 
 def start_kb_for_user():
     sect_1_button = types.InlineKeyboardButton(User.choose,
@@ -23,6 +37,11 @@ def start_kb_for_user():
 
 
 class User:
+    prev_list = "prev_list"
+    next_list = "next_list"
+    back_cal = "back_cal"
+    back_inf = "Назад."
+
     user_add = 5
     user_choose = 6
     ans = "Выберите что вы хотите сделать"
