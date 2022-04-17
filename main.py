@@ -103,7 +103,7 @@ def alias_adding(message):
     alias = message.text
     db_object.execute('SELECT gh_username FROM gh_users WHERE tg_alias_user = %s' % (alias))
     result = db_object.fetchone()
-    print("GGG6")
+    print("GGGd6")
     if not result:
         bot.send_message(message.chat.id, text="Такой alias уже есть. Введите уникальный.")
     else:
