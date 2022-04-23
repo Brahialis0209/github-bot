@@ -199,6 +199,9 @@ def user_adding(message):
     if r.status_code == 200:
         db_object.execute(f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{message.text}'")
         result = db_object.fetchall()
+        print("------------")
+        print(result)
+        print("------------")
         if len(result) != 0:
             alias = result[0][1]
             bot.send_message(chat_id=message.chat.id,
