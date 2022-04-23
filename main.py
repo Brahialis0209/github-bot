@@ -198,29 +198,8 @@ def query_handler(call):
  \
                                                                                                  "🔘 Ссылка на пользователя: {}.".format(
         name, url),
-                          reply_markup=ans.back_to_menu_kb())
+                          reply_markup=ans.back_to_menu_and_back_kb())
     update_user_state(call.message.chat.id, States.S_LOOK_ALI)
-
-
-
-
-
-
-def is_user_ali_added(data):
-    return ans.Answers.ali_user_added_cal in data.split(' ')
-#  we enter give me info about user
-@bot.callback_query_handler(func=lambda call: is_user_ali_added(call.data))
-def query_handler(call):
-    user_id = call.message.chat.id
-    alias = call.data.split(' ')[-1]
-    db_object.execute(f"SELECT gh_username, gh_user_avatar, gh_user_url FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
-    result = db_object.fetchone()
-    name = result[0]
-    url = result[2]
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
-                                                                                                 
-                                                                                             "🔘 Ссылка на пользователя: {}.".format(name, url),
-                          reply_markup=ans.back_to_menu_kb())
 
 # END callback.handlers
 # ---------------------------------------------------------------------------------------------
@@ -239,7 +218,7 @@ def query_handler(call):
                           reply_markup=ans.back_to_previous_kb(),
                           text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
-#  we entered user_name
+#  we entered user gitname
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
     query_url = f"https://api.github.com/users/{message.text}"
@@ -274,6 +253,32 @@ def user_adding(message):
 
 
 # -----------------------------------
+#  pick back to main menu
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_USER_ADDED and
+                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+def query_handler(call):
+    update_user_state(call.message.chat.id, States.S_START)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
+
+def is_user_ali_added(data):
+    return ans.Answers.ali_user_added_cal in data.split(' ')
+
+#  (added new alias) we enter give me info about user
+@bot.callback_query_handler(func=lambda call: is_user_ali_added(call.data))
+def query_handler(call):
+    user_id = call.message.chat.id
+    alias = call.data.split(' ')[-1]
+    db_object.execute(
+        f"SELECT gh_username, gh_user_avatar, gh_user_url FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
+    result = db_object.fetchone()
+    name = result[0]
+    url = result[2]
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
+ \
+                                                                                                 "🔘 Ссылка на пользователя: {}.".format(
+        name, url),
+                          reply_markup=ans.back_to_menu_kb())
 #  we enter alias for user
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER_ENTER)
 def alias_adding(message):
@@ -289,7 +294,7 @@ def alias_adding(message):
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
                          text="Пользователь {} добавлен.".format(message.text))
     else:
-        bot.send_message(chat_id=message.chat.id,
+        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
                               text="Такой alias уже есть. Введите уникальный.")
 
 # END MESS HANDLERS
