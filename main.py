@@ -106,10 +106,11 @@ def query_handler(call):
     if len_hist == 0:
         mark = types.InlineKeyboardMarkup()
         mark.row(types.InlineKeyboardButton(User.back_inf,
-                                            callback_data= " " + User.back_cal))
+                                            callback_data=" " + User.back_cal))
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text="Список сохранённых alias пуст. Добавьте нового пользователя.",
                               reply_markup=mark)
+        update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
