@@ -109,7 +109,7 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
  \
                                                                                                  "🔘 Ссылка на пользователя: {}.".format(
-        name, avatar, url),
+        name, url),
                           reply_markup=ans.back_to_menu_kb())
     update_user_state(call.message.chat.id, States.S_START)
 
@@ -198,14 +198,21 @@ def user_adding(message):
     r = requests.get(query_url, headers=headers)
     print(r.status_code)
     if r.status_code == 200:
-        dict_data = json.loads(r.text)
-        gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
-        db_object.execute("INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar, gh_user_url) VALUES (%s, %s, %s, %s)",
-                          (message.from_user.id, gh_username, dict_data['avatar_url'], dict_data['html_url']))
-        db_connection.commit()
-        update_user_state(message.from_user.id, States.S_ALI_USER_ENTER)
-        bot.send_message(chat_id=message.chat.id,
-                              text="Введите alias для нового пользователя.")
+        db_object.execute(f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = {message.from_user.id} AND gh_username = {message.text}")
+        result = db_object.fetchall()
+        if result:
+            alias = result[1]
+            bot.send_message(chat_id=message.chat.id,
+                             text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}.".format(alias))
+        else:
+            dict_data = json.loads(r.text)
+            gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
+            db_object.execute("INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar, gh_user_url) VALUES (%s, %s, %s, %s)",
+                              (message.from_user.id, gh_username, dict_data['avatar_url'], dict_data['html_url']))
+            db_connection.commit()
+            update_user_state(message.from_user.id, States.S_ALI_USER_ENTER)
+            bot.send_message(chat_id=message.chat.id,
+                                  text="Введите alias для нового пользователя.")
 
     else:
         bot.send_message(chat_id=message.chat.id,
