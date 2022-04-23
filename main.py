@@ -34,10 +34,8 @@ def update_user_state(user_id, state):
 
 
 def get_user_state(user_id):
-    print(user_id)
     db_object.execute(f"SELECT user_state FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
-    print(result)
     if not result:
         return -1
     return result[0]  # (state,)
@@ -85,6 +83,52 @@ def start_message(message):
                              reply_markup=user_opts.start_kb_for_user())
             update_user_state(message.chat.id, States.S_CHOOSE_USER)
 
+
+@bot.message_handler(commands=['text'])
+def start_message(message):
+    user_id = message.from_user.id
+    username = message.from_user.username
+    db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
+    result = db_object.fetchone()
+    print("----------")
+    print(result)
+    print("----------")
+    if not result:
+        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %s)",
+                          (user_id, username, States.S_START))
+        db_connection.commit()
+        bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+    else:
+        if get_user_state(user_id) == States.S_START:
+            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+        elif get_user_state(user_id) == States.S_USER_CONTROL:
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+        elif get_user_state(user_id) == States.S_CHOOSE_USER:
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_CHOOSE_USER)
+
+        elif get_user_state(user_id) == States.S_ADD_USER:
+            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
+            db_object.execute(
+                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
+            db_connection.commit()
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_USER_CONTROL)
+        elif get_user_state(user_id) == States.S_ALI_USER_ENTER:
+            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
+            db_object.execute(
+                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
+            db_connection.commit()
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_USER_CONTROL)
+        elif get_user_state(user_id) == States.S_ALI_USER_ADDED:
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_CHOOSE_USER)
 
 
 
@@ -232,48 +276,6 @@ def alias_adding(message):
 # END MESS HANDLERS
 
 
-@bot.message_handler(commands=['text'])
-def start_message(message):
-    user_id = message.from_user.id
-    username = message.from_user.username
-    db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
-    result = db_object.fetchone()
-    if not result:
-        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %s)",
-                          (user_id, username, States.S_START))
-        db_connection.commit()
-        bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-    else:
-        if get_user_state(user_id) == States.S_START:
-            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-        elif get_user_state(user_id) == States.S_USER_CONTROL:
-            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
-                             reply_markup=user_opts.start_kb_for_user())
-        elif get_user_state(user_id) == States.S_CHOOSE_USER:
-            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
-                             reply_markup=user_opts.start_kb_for_user())
-            update_user_state(message.chat.id, States.S_CHOOSE_USER)
-
-        elif get_user_state(user_id) == States.S_ADD_USER:
-            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
-            db_object.execute(
-                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
-            db_connection.commit()
-            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
-                             reply_markup=user_opts.start_kb_for_user())
-            update_user_state(message.chat.id, States.S_USER_CONTROL)
-        elif get_user_state(user_id) == States.S_ALI_USER_ENTER:
-            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
-            db_object.execute(
-                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
-            db_connection.commit()
-            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
-                             reply_markup=user_opts.start_kb_for_user())
-            update_user_state(message.chat.id, States.S_USER_CONTROL)
-        elif get_user_state(user_id) == States.S_ALI_USER_ADDED:
-            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
-                             reply_markup=user_opts.start_kb_for_user())
-            update_user_state(message.chat.id, States.S_CHOOSE_USER)
 
 
 @server.route(f"/{BOT_TOKEN}", methods=["POST"])
