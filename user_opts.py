@@ -38,6 +38,7 @@ def start_kb_for_user():
     return mark
 
 
+
 class User:
     prev_list = "prev_list"
     next_list = "next_list"

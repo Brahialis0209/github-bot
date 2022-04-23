@@ -84,6 +84,8 @@ def start_message(message):
 # ---------------------------------------------------------------------------------------------
 # START callback.handlers
 
+
+# -------------------------------
 # "back" when we have chosen user control options
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_USER_CONTROL
                                               and call.data.split(" ")[-1] == user_opts.User.back_cal)
@@ -104,8 +106,8 @@ def query_handler(call):
 
 
 
-
-# "back" when we choosen alias
+# -------------------------------
+# "back" when we choose alias from history
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
                                               and call.data.split(" ")[-1] == user_opts.User.back_cal)
 def query_handler(call):
@@ -113,31 +115,10 @@ def query_handler(call):
                           text=User.ans, reply_markup=user_opts.start_kb_for_user())
     update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
-
-#  we pick alias from our list
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
-                                              and call.data.split(" ")[-1] != user_opts.User.back_cal)
-def query_handler(call):
-    alias = call.data.split(" ")[0]
-    user_id = call.message.chat.id
-    db_object.execute(
-        f"SELECT gh_username, gh_user_avatar, gh_user_url FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
-    result = db_object.fetchone()
-    name = result[0]
-    avatar = result[1]
-    url = result[2]
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
- \
-                                                                                                 "🔘 Ссылка на пользователя: {}.".format(
-        name, url),
-                          reply_markup=ans.back_to_menu_kb())
-    update_user_state(call.message.chat.id, States.S_START)
-
-
-
+#  we pick check history of aliases
 def is_user_choose(data):
     return User.user_choice in data.split(' ')
-#  we pick check history of aliases
+
 @bot.callback_query_handler(func=lambda call: is_user_choose(call.data))
 def query_handler(call):
     db_object.execute(
@@ -158,14 +139,49 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
 
 
+# -------------------------------
+# "back" when we choose add new user
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ADD_USER
+                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.start_kb_for_user())
+    update_user_state(call.message.chat.id, States.S_USER_CONTROL)
+
+#  we pick add user
 def is_user_add(data):
     return User.user_add in data.split(' ')
-#  we pick add user
+
 @bot.callback_query_handler(func=lambda call: is_user_add(call.data))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          reply_markup=ans.back_to_previous_kb(),
                           text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
+
+
+
+
+
+
+#  we pick alias from our list
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
+                                              and call.data.split(" ")[-1] != user_opts.User.back_cal)
+def query_handler(call):
+    alias = call.data.split(" ")[0]
+    user_id = call.message.chat.id
+    db_object.execute(
+        f"SELECT gh_username, gh_user_avatar, gh_user_url FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
+    result = db_object.fetchone()
+    name = result[0]
+    avatar = result[1]
+    url = result[2]
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
+ \
+                                                                                                 "🔘 Ссылка на пользователя: {}.".format(
+        name, url),
+                          reply_markup=ans.back_to_menu_kb())
+    update_user_state(call.message.chat.id, States.S_START)
 
 
 

@@ -33,11 +33,22 @@ def back_to_menu_kb():
     mark.row(button)
     return mark
 
+
+def back_to_previous_kb():
+    button = types.InlineKeyboardButton(Answers.back_inf,
+                                          callback_data= " " + Answers.back_cal)
+    mark = types.InlineKeyboardMarkup(row_width=1)
+    mark.add(button)
+    return mark
+
+
 class Answers:
     greeting_old = "Давай продолжим общение. Кажется мы остановились тут. \n "
-    ali_user_added_inf = "Вывести информацию о пользователе."
+    ali_user_added_inf = "Вывести информацию о пользователе"
     ali_user_added_cal = "ali_added_cal"
     back_to_menu_cal = "back_to_menu_cal"
+    back_inf = "Назад"
+    back_cal = "back_cal"
 
 
     user_page = 1
@@ -45,10 +56,10 @@ class Answers:
     pr_page = 3
     start_markup = types.ReplyKeyboardMarkup()
     start_inf = "Старт"
-    back_to_menu_inf = "Вернуться в главное меню."
-    repo_inf = "Получить информацию о репозитории. (В разработке)"
-    user_inf = "Получить информацию о пользователе."
-    pr_inf = "Получить информацию о pull request.(В разработке)"
+    back_to_menu_inf = "Вернуться в главное меню"
+    repo_inf = "Получить информацию о репозитории (В разработке)"
+    user_inf = "Получить информацию о пользователе"
+    pr_inf = "Получить информацию о pull request(В разработке)"
     start_markup.row(user_inf)
     start_markup.row(repo_inf)
     start_markup.row(pr_inf)
