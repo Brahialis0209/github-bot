@@ -27,10 +27,12 @@ def user_ali_added_kb(alias):
 
 
 def back_to_menu_kb():
-    button = types.InlineKeyboardButton(Answers.back_to_menu_inf,
-                                               callback_data=Answers.back_to_menu_cal + " ")
-    mark = types.InlineKeyboardMarkup()
-    mark.row(button)
+    button_1 = types.InlineKeyboardButton(Answers.back_inf,
+                                        callback_data=" " + Answers.back_cal)
+    button_2 = types.InlineKeyboardButton(Answers.back_to_menu_inf,
+                                               callback_data= " " + Answers.back_to_menu_cal)
+    mark = types.InlineKeyboardMarkup(row_width=1)
+    mark.add(button_1, button_2)
     return mark
 
 

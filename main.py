@@ -163,9 +163,28 @@ def query_handler(call):
 
 
 
+# -------------------------------
+# "back" when we looked alias from history
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_ALI and
+                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+def query_handler(call):
+    update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
 
-#  we pick alias from our list
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
+#  pick back to main menu
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_ALI and
+                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+def query_handler(call):
+    update_user_state(call.message.chat.id, States.S_START)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
+
+#  we pick alias from our history list
+def is_alias(data):
+    return User.alias_cal in data.split(' ')
+
+@bot.callback_query_handler(func=lambda call: is_alias(call.data)
                                               and call.data.split(" ")[-1] != user_opts.User.back_cal)
 def query_handler(call):
     alias = call.data.split(" ")[0]
@@ -174,14 +193,16 @@ def query_handler(call):
         f"SELECT gh_username, gh_user_avatar, gh_user_url FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     name = result[0]
-    avatar = result[1]
     url = result[2]
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
  \
                                                                                                  "🔘 Ссылка на пользователя: {}.".format(
         name, url),
                           reply_markup=ans.back_to_menu_kb())
-    update_user_state(call.message.chat.id, States.S_START)
+    update_user_state(call.message.chat.id, States.S_LOOK_ALI)
+
+
+
 
 
 
@@ -202,15 +223,6 @@ def query_handler(call):
                                                                                              "🔘 Ссылка на пользователя: {}.".format(name, url),
                           reply_markup=ans.back_to_menu_kb())
 
-
-def is_back_to_menu(data):
-    return ans.Answers.back_to_menu_cal in data.split(' ')
-#  pick back to main menu
-@bot.callback_query_handler(func=lambda call: is_back_to_menu(call.data))
-def query_handler(call):
-    update_user_state(call.message.chat.id, States.S_START)
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                          text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
 # END callback.handlers
 # ---------------------------------------------------------------------------------------------
 
