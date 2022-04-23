@@ -205,7 +205,7 @@ def user_adding(message):
         print(result)
         print("------------")
         if len(result) != 0:
-            alias = result[0][1]
+            alias = str(result[0][1]).replace(" ", "")
             bot.send_message(chat_id=message.chat.id,
                              text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. Введите другой ник.".format(alias))
         else:
