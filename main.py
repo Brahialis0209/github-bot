@@ -48,18 +48,44 @@ def get_user_state(user_id):
 def start_message(message):
     user_id = message.from_user.id
     username = message.from_user.username
-    bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
     db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
     result = db_object.fetchone()
     if not result:
         db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %s)",
                           (user_id, username, States.S_START))
         db_connection.commit()
+        bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+    else:
+        if get_user_state(user_id) == States.S_START:
+            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+        elif get_user_state(user_id) == States.S_USER_CONTROL:
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,  reply_markup=user_opts.start_kb_for_user())
+        elif get_user_state(user_id) == States.S_CHOOSE_USER:
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_CHOOSE_USER)
+
+        elif get_user_state(user_id) == States.S_ADD_USER:
+            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
+            db_object.execute(
+                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
+            db_connection.commit()
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,  reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_USER_CONTROL)
+        elif get_user_state(user_id) == States.S_ALI_USER_ENTER:
+            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
+            db_object.execute(
+                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
+            db_connection.commit()
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_USER_CONTROL)
+        elif get_user_state(user_id) == States.S_ALI_USER_ADDED:
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_CHOOSE_USER)
 
 
-@bot.message_handler(commands=['help'])
-def start_message(message):
-    bot.send_message(message.chat.id, Answers.reference_ans, parse_mode='Markdown')
 
 
 
@@ -101,8 +127,6 @@ def query_handler(call):
         f"SELECT tg_alias_user FROM gh_users WHERE tg_user_id = '{call.message.chat.id}'")
     result = db_object.fetchall()
     len_hist = len(result)
-    print(result)
-    print(len_hist)
     if len_hist == 0:
         mark = types.InlineKeyboardMarkup()
         mark.row(types.InlineKeyboardButton(User.back_inf,
@@ -110,13 +134,11 @@ def query_handler(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text="Список сохранённых alias пуст. Добавьте нового пользователя.",
                               reply_markup=mark)
-        update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text=User.ans, reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
-        update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
-
+    update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
 
 
 def is_user_add(data):
@@ -132,7 +154,6 @@ def query_handler(call):
 
 def is_user_control(data):
     return ans.Answers.user_control in data.split(' ')
-
 #  we pick user control (1 step)
 @bot.callback_query_handler(func=lambda call: is_user_control(call.data))
 def query_handler(call):
@@ -144,13 +165,11 @@ def query_handler(call):
 
 def is_user_ali_added(data):
     return ans.Answers.ali_user_added_cal in data.split(' ')
-#  we enter new alias
+#  we enter give me info about user
 @bot.callback_query_handler(func=lambda call: is_user_ali_added(call.data))
 def query_handler(call):
     user_id = call.message.chat.id
     alias = call.data.split(' ')[-1]
-    print(user_id)
-    print(alias)
     db_object.execute(f"SELECT gh_username, gh_user_avatar FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
@@ -166,10 +185,11 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
-
 # END callback.handlers
 
 
+# START MESS HANDLERS
+#  we enter user_name
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
     query_url = f"https://api.github.com/users/{message.text}"
@@ -182,7 +202,7 @@ def user_adding(message):
         db_object.execute("INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar) VALUES (%s, %s, %s)",
                           (message.from_user.id, gh_username, dict_data['avatar_url']))
         db_connection.commit()
-        update_user_state(message.from_user.id, States.S_ALI_USER)
+        update_user_state(message.from_user.id, States.S_ALI_USER_ENTER)
         bot.send_message(chat_id=message.chat.id,
                               text="Введите alias для нового пользователя.")
 
@@ -191,8 +211,8 @@ def user_adding(message):
                               text="Такого пользователя найти не удалось, попробуйти ввести ник правильно.")
 
 
-
-@bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER)
+#  we enter alias for user
+@bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER_ENTER)
 def alias_adding(message):
     user_id = message.from_user.id
     alias = message.text
@@ -209,12 +229,51 @@ def alias_adding(message):
         bot.send_message(chat_id=message.chat.id,
                               text="Такой alias уже есть. Введите уникальный.")
 
+# END MESS HANDLERS
 
 
-#  REMOVE
-@bot.message_handler(content_types=['text'])
-def send_text(message):
-    bot.send_message(message.chat.id, User.ans, reply_markup=user_opts.start_kb_for_user())
+@bot.message_handler(commands=['text'])
+def start_message(message):
+    user_id = message.from_user.id
+    username = message.from_user.username
+    db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
+    result = db_object.fetchone()
+    if not result:
+        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %s)",
+                          (user_id, username, States.S_START))
+        db_connection.commit()
+        bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+    else:
+        if get_user_state(user_id) == States.S_START:
+            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+        elif get_user_state(user_id) == States.S_USER_CONTROL:
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+        elif get_user_state(user_id) == States.S_CHOOSE_USER:
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_CHOOSE_USER)
+
+        elif get_user_state(user_id) == States.S_ADD_USER:
+            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
+            db_object.execute(
+                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
+            db_connection.commit()
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_USER_CONTROL)
+        elif get_user_state(user_id) == States.S_ALI_USER_ENTER:
+            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
+            db_object.execute(
+                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
+            db_connection.commit()
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_USER_CONTROL)
+        elif get_user_state(user_id) == States.S_ALI_USER_ADDED:
+            bot.send_message(message.chat.id, text=Answers.greeting_old + User.ans,
+                             reply_markup=user_opts.start_kb_for_user())
+            update_user_state(message.chat.id, States.S_CHOOSE_USER)
 
 
 @server.route(f"/{BOT_TOKEN}", methods=["POST"])

@@ -34,6 +34,7 @@ def back_to_menu_kb():
     return mark
 
 class Answers:
+    greeting_old = "Давай продолжим общение. Кажется мы остановились тут. \n "
     ali_user_added_inf = "Вывести информацию о пользователе."
     ali_user_added_cal = "ali_added_cal"
     back_to_menu_cal = "back_to_menu_cal"

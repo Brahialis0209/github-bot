@@ -7,7 +7,7 @@ class States:
     S_USER_CONTROL = 1  # user pick user's control
     S_CHOOSE_USER = 2  # choose usr from db
     S_ADD_USER = 3  # add new usr
-    S_ALI_USER = 4  # add user alias
+    S_ALI_USER_ENTER = 4  # add user alias
     S_ALI_USER_ADDED = 5  # added user alias
 
 
