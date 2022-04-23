@@ -198,12 +198,12 @@ def user_adding(message):
     r = requests.get(query_url, headers=headers)
     print(r.status_code)
     if r.status_code == 200:
-        db_object.execute(f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = {message.from_user.id} AND gh_username = {message.text}")
+        db_object.execute(f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{message.text}'")
         result = db_object.fetchall()
         if result:
             alias = result[1]
             bot.send_message(chat_id=message.chat.id,
-                             text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}.".format(alias))
+                             text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. Введите другой ник.".format(alias))
         else:
             dict_data = json.loads(r.text)
             gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
