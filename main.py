@@ -83,8 +83,6 @@ def start_message(message):
 
 # ---------------------------------------------------------------------------------------------
 # START callback.handlers
-
-
 # -------------------------------
 # "back" when we have chosen user control options
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_USER_CONTROL
@@ -137,6 +135,8 @@ def query_handler(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text=User.ans, reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
     update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
+
+
 
 
 # -------------------------------
@@ -216,7 +216,6 @@ def query_handler(call):
     db_object.execute(f"SELECT gh_username, gh_user_avatar, gh_user_url FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     name = result[0]
-    avatar = result[1]
     url = result[2]
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
                                                                                                  
@@ -228,7 +227,19 @@ def query_handler(call):
 
 # ---------------------------------------------------------------------------------------------
 # START MESS HANDLERS
-#  we enter user_name
+# "back" when we entered gh username
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_USER_ENTER and
+                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+def query_handler(call):
+    user_id = call.message.chat.id
+    db_object.execute(
+        f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
+    db_connection.commit()
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          reply_markup=ans.back_to_previous_kb(),
+                          text="Введите имя пользователя:")
+    update_user_state(call.message.chat.id, States.S_ADD_USER)
+#  we entered user_name
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
     query_url = f"https://api.github.com/users/{message.text}"
@@ -242,7 +253,8 @@ def user_adding(message):
         if len(result) != 0:
             alias = str(result[0][1]).replace(" ", "")
             bot.send_message(chat_id=message.chat.id,
-                             text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. Введите другой ник.".format(alias))
+                             text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. Введите другой ник.".format(alias),
+                             reply_markup=ans.back_to_previous_kb())
         else:
             dict_data = json.loads(r.text)
             gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
@@ -251,13 +263,17 @@ def user_adding(message):
             db_connection.commit()
             update_user_state(message.from_user.id, States.S_ALI_USER_ENTER)
             bot.send_message(chat_id=message.chat.id,
+                                reply_markup=ans.back_to_previous_kb(),
                                   text="Введите alias для нового пользователя.")
 
     else:
         bot.send_message(chat_id=message.chat.id,
-                              text="Такого пользователя найти не удалось, попробуйти ввести ник правильно.")
+                              text="Такого пользователя найти не удалось, попробуйти ввести ник правильно.",
+                         reply_markup=ans.back_to_previous_kb())
 
 
+
+# -----------------------------------
 #  we enter alias for user
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER_ENTER)
 def alias_adding(message):
