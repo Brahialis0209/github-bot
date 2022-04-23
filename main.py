@@ -169,8 +169,8 @@ def query_handler(call):
     avatar = result[1]
     url = result[2]
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
-                                                                                                 "🔘 Аватар: {}\n" \
-                                           "🔘 Ссылка на пользователя: {}.".format(name, avatar, url),
+                                                                                                 
+                                                             "🔘 Ссылка на пользователя: {}.".format(name, url),
                           reply_markup=ans.back_to_menu_kb())
 
 
