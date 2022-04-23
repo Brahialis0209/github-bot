@@ -10,6 +10,7 @@ from flask import Flask, request
 import os
 import requests
 import json
+from telebot import types
 
 
 logger = telebot.logger
@@ -96,9 +97,22 @@ def is_user_choose(data):
 #  we pick check history of aliases
 @bot.callback_query_handler(func=lambda call: is_user_choose(call.data))
 def query_handler(call):
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                          text=User.ans, reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
-    update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
+    db_object.execute(
+        f"SELECT tg_alias_user FROM gh_users WHERE tg_user_id = '{call.message.chat.id}'")
+    result = db_object.fetchall()
+    if result is None:
+        mark = types.InlineKeyboardMarkup()
+        mark.row(types.InlineKeyboardButton(User.back_inf,
+                                            callback_data= " " + User.back_cal))
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                              text="Список сохранённых alias пуст. Добавьте нового пользователя.",
+                              reply_markup=mark)
+
+    # len_hist = len(result)
+    else:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                              text=User.ans, reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
+        update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
 
 
 

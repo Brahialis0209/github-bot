@@ -21,7 +21,7 @@ def aliases_kb_for_user(db_object, user_id):
         mark.row(types.InlineKeyboardButton(str(result[i][0]).replace(" ", ""),
                                                callback_data=str(result[i][0]).replace(" ", "") + " "))
     mark.row(types.InlineKeyboardButton(User.back_inf,
-                                        callback_data=User.back_cal + " " + User.back_cal))
+                                        callback_data=" " + User.back_cal))
     return mark
 
 
@@ -40,7 +40,7 @@ class User:
     prev_list = "prev_list"
     next_list = "next_list"
     back_cal = "back_cal"
-    back_inf = "Назад."
+    back_inf = "Назад"
 
     user_add = 5
     user_choose = 6
