@@ -174,7 +174,7 @@ def query_handler(call):
     url = result[2]
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="🔘 Имя: {}\n" \
                                                                                                  
-                                                                                             "🔘 Ссылка на пользователя: {}.".format(name, avatar, url),
+                                                                                             "🔘 Ссылка на пользователя: {}.".format(name, url),
                           reply_markup=ans.back_to_menu_kb())
 
 
@@ -196,12 +196,11 @@ def user_adding(message):
     query_url = f"https://api.github.com/users/{message.text}"
     headers = {'Authorization': f'token {token}'}
     r = requests.get(query_url, headers=headers)
-    print(r.status_code)
     if r.status_code == 200:
         db_object.execute(f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{message.text}'")
         result = db_object.fetchall()
-        if result:
-            alias = result[1]
+        if len(result) != 0:
+            alias = result[0][1]
             bot.send_message(chat_id=message.chat.id,
                              text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. Введите другой ник.".format(alias))
         else:
