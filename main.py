@@ -1,5 +1,4 @@
 import telebot
-
 import ans
 import user_opts
 from ans import Answers
@@ -94,7 +93,7 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
 
-#  we pick alias from list
+#  we pick alias from our list
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
                                               and call.data.split(" ")[-1] != user_opts.User.back_cal)
 def query_handler(call):
@@ -201,9 +200,6 @@ def user_adding(message):
         name = dict_data['login']
         db_object.execute(f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{name}'")
         result = db_object.fetchall()
-        print("------------")
-        print(result)
-        print("------------")
         if len(result) != 0:
             alias = str(result[0][1]).replace(" ", "")
             bot.send_message(chat_id=message.chat.id,
