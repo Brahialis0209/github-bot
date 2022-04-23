@@ -100,7 +100,10 @@ def query_handler(call):
     db_object.execute(
         f"SELECT tg_alias_user FROM gh_users WHERE tg_user_id = '{call.message.chat.id}'")
     result = db_object.fetchall()
-    if result is None:
+    len_hist = len(result)
+    print(result)
+    print(len_hist)
+    if len_hist == 0:
         mark = types.InlineKeyboardMarkup()
         mark.row(types.InlineKeyboardButton(User.back_inf,
                                             callback_data= " " + User.back_cal))
@@ -108,7 +111,6 @@ def query_handler(call):
                               text="Список сохранённых alias пуст. Добавьте нового пользователя.",
                               reply_markup=mark)
 
-    # len_hist = len(result)
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text=User.ans, reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
