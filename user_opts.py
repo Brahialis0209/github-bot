@@ -27,13 +27,15 @@ def aliases_kb_for_user(db_object, user_id):
 
 
 def start_kb_for_user():
-    sect_1_button = types.InlineKeyboardButton(User.choose,
+    button_1 = types.InlineKeyboardButton(User.choose,
                                                callback_data=User.user_choice + " " + str(User.user_add))
-    sect_2_button = types.InlineKeyboardButton(User.new,
+    button_2 = types.InlineKeyboardButton(User.new,
                                                callback_data=User.user_add + " " + str(User.user_choose))
-    math_mark = types.InlineKeyboardMarkup(row_width=1)
-    math_mark.add(sect_1_button, sect_2_button)
-    return math_mark
+    button_3 = types.InlineKeyboardButton(User.back_inf,
+                                        callback_data=" " + User.back_cal)
+    mark = types.InlineKeyboardMarkup(row_width=1)
+    mark.add(button_1, button_2, button_3)
+    return mark
 
 
 class User:

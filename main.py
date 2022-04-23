@@ -81,8 +81,29 @@ def start_message(message):
             update_user_state(message.chat.id, States.S_START)
 
 
-
+# ---------------------------------------------------------------------------------------------
 # START callback.handlers
+
+# "back" when we have chosen user control options
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_USER_CONTROL
+                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
+    update_user_state(call.message.chat.id, States.S_START)
+
+#  we pick user control (1 step)
+def is_user_control(data):
+    return ans.Answers.user_control in data.split(' ')
+
+@bot.callback_query_handler(func=lambda call: is_user_control(call.data))
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.start_kb_for_user())
+    update_user_state(call.message.chat.id, States.S_USER_CONTROL)
+
+
+
 
 # "back" when we choosen alias
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
@@ -148,17 +169,6 @@ def query_handler(call):
 
 
 
-def is_user_control(data):
-    return ans.Answers.user_control in data.split(' ')
-#  we pick user control (1 step)
-@bot.callback_query_handler(func=lambda call: is_user_control(call.data))
-def query_handler(call):
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                          text=User.ans, reply_markup=user_opts.start_kb_for_user())
-    update_user_state(call.message.chat.id, States.S_USER_CONTROL)
-
-
-
 def is_user_ali_added(data):
     return ans.Answers.ali_user_added_cal in data.split(' ')
 #  we enter give me info about user
@@ -186,8 +196,9 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
 # END callback.handlers
+# ---------------------------------------------------------------------------------------------
 
-
+# ---------------------------------------------------------------------------------------------
 # START MESS HANDLERS
 #  we enter user_name
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
@@ -238,7 +249,7 @@ def alias_adding(message):
                               text="Такой alias уже есть. Введите уникальный.")
 
 # END MESS HANDLERS
-
+# ---------------------------------------------------------------------------------------------
 
 
 
