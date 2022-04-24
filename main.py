@@ -226,7 +226,7 @@ def user_adding(message):
     r = requests.get(query_url, headers=headers)
     if r.status_code == 200:
         dict_data = json.loads(r.text)
-        name = dict_data['login']
+        name = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
         db_object.execute(f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
