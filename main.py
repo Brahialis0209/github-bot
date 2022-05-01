@@ -11,7 +11,6 @@ import requests
 import json
 from telebot import types
 
-
 logger = telebot.logger
 logger.setLevel(logging.DEBUG)
 
@@ -38,7 +37,6 @@ def get_user_state(user_id):
     if not result:
         return -1
     return result[0]  # (state,)
-
 
 
 @bot.message_handler(commands=['start'])
@@ -92,16 +90,17 @@ def query_handler(call):
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
     update_user_state(call.message.chat.id, States.S_START)
 
+
 #  we pick user control (1 step)
 def is_user_control(data):
     return ans.Answers.user_control in data.split(' ')
+
 
 @bot.callback_query_handler(func=lambda call: is_user_control(call.data))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_user())
     update_user_state(call.message.chat.id, States.S_USER_CONTROL)
-
 
 
 # -------------------------------
@@ -113,9 +112,11 @@ def query_handler(call):
                           text=User.ans, reply_markup=user_opts.start_kb_for_user())
     update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
+
 #  we pick check history of aliases
 def is_user_choose(data):
     return User.user_choice in data.split(' ')
+
 
 @bot.callback_query_handler(func=lambda call: is_user_choose(call.data))
 def query_handler(call):
@@ -133,10 +134,9 @@ def query_handler(call):
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                              text=User.history_aliases_ans, reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
+                              text=User.history_aliases_ans,
+                              reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
     update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
-
-
 
 
 # -------------------------------
@@ -148,9 +148,11 @@ def query_handler(call):
                           text=User.ans, reply_markup=user_opts.start_kb_for_user())
     update_user_state(call.message.chat.id, States.S_USER_CONTROL)
 
+
 #  we pick add user
 def is_user_add(data):
     return User.user_add in data.split(' ')
+
 
 @bot.callback_query_handler(func=lambda call: is_user_add(call.data))
 def query_handler(call):
@@ -158,9 +160,6 @@ def query_handler(call):
                           reply_markup=ans.back_to_previous_kb(),
                           text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
-
-
-
 
 
 # -------------------------------
@@ -172,6 +171,7 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
 
+
 #  pick back to main menu
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_ALI and
                                               call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
@@ -180,9 +180,11 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
 
+
 #  we pick alias from our history list
 def is_alias(data):
     return User.alias_cal in data.split(' ')
+
 
 @bot.callback_query_handler(func=lambda call: is_alias(call.data)
                                               and call.data.split(" ")[-1] != user_opts.User.back_cal)
@@ -201,6 +203,7 @@ def query_handler(call):
                           reply_markup=ans.back_to_menu_and_back_kb())
     update_user_state(call.message.chat.id, States.S_LOOK_ALI)
 
+
 # END callback.handlers
 # ---------------------------------------------------------------------------------------------
 
@@ -218,6 +221,8 @@ def query_handler(call):
                           reply_markup=ans.back_to_previous_kb(),
                           text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
+
+
 #  we entered user gitname
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
@@ -227,29 +232,31 @@ def user_adding(message):
     if r.status_code == 200:
         dict_data = json.loads(r.text)
         name = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
-        db_object.execute(f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{name}'")
+        db_object.execute(
+            f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
             alias = str(result[0][1]).replace(" ", "")
             bot.send_message(chat_id=message.chat.id,
-                             text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. Введите другой ник.".format(alias),
+                             text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. Введите другой ник.".format(
+                                 alias),
                              reply_markup=ans.back_to_previous_kb())
         else:
             dict_data = json.loads(r.text)
             gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
-            db_object.execute("INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar, gh_user_url) VALUES (%s, %s, %s, %s)",
-                              (message.from_user.id, gh_username, dict_data['avatar_url'], dict_data['html_url']))
+            db_object.execute(
+                "INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar, gh_user_url) VALUES (%s, %s, %s, %s)",
+                (message.from_user.id, gh_username, dict_data['avatar_url'], dict_data['html_url']))
             db_connection.commit()
             update_user_state(message.from_user.id, States.S_ALI_USER_ENTER)
             bot.send_message(chat_id=message.chat.id,
-                                reply_markup=ans.back_to_previous_kb(),
-                                  text="Введите alias для нового пользователя.")
+                             reply_markup=ans.back_to_previous_kb(),
+                             text="Введите alias для нового пользователя.")
 
     else:
         bot.send_message(chat_id=message.chat.id,
-                              text="Такого пользователя найти не удалось, попробуйти ввести ник правильно.",
+                         text="Такого пользователя найти не удалось, попробуйти ввести ник правильно.",
                          reply_markup=ans.back_to_previous_kb())
-
 
 
 # -----------------------------------
@@ -261,8 +268,10 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
 
+
 def is_user_ali_added(data):
     return ans.Answers.ali_user_added_cal in data.split(' ')
+
 
 #  (added new alias) we enter give me info about user
 @bot.callback_query_handler(func=lambda call: is_user_ali_added(call.data))
@@ -279,6 +288,8 @@ def query_handler(call):
                                                                                                  "🔘 Ссылка на пользователя: {}.".format(
         name, url),
                           reply_markup=ans.back_to_menu_kb())
+
+
 #  we enter alias for user
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER_ENTER)
 def alias_adding(message):
@@ -295,11 +306,11 @@ def alias_adding(message):
                          text="Пользователь {} добавлен.".format(message.text))
     else:
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
-                              text="Такой alias уже есть. Введите уникальный.")
+                         text="Такой alias уже есть. Введите уникальный.")
+
 
 # END MESS HANDLERS
 # ---------------------------------------------------------------------------------------------
-
 
 
 @server.route(f"/{BOT_TOKEN}", methods=["POST"])
