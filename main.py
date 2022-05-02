@@ -150,7 +150,7 @@ def is_repos_control(data):
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_repos())
-    update_user_state(call.message.chat.id, States.S_USER_CONTROL)
+    update_user_state(call.message.chat.id, States.S_REPOS_CONTROL)
 
 
 # -------------------------------
