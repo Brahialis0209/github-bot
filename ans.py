@@ -99,4 +99,4 @@ class Answers:
 
     user_control = "user_control"
     pr_control = "pr_control"
-    repos_control = "repo_control"
+    repos_control = "repos_control"
