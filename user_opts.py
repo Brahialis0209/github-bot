@@ -38,7 +38,7 @@ def aliases_kb_for_user(db_object, user_id):
 
 def aliases_kb_for_repos(db_object, user_id):
     db_object.execute(
-        f"SELECT tg_alias_user FROM repos WHERE tg_user_id = '{user_id}'")
+        f"SELECT tg_alias_repos FROM repos WHERE tg_user_id = '{user_id}'")
     result = db_object.fetchall()
     len_hist = len(result)
     mark = types.InlineKeyboardMarkup()

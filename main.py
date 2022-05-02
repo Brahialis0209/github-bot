@@ -531,7 +531,7 @@ def alias_adding(message):
         db_object.execute(
             f"UPDATE gh_users SET tg_alias_user = '{alias}' WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
         db_connection.commit()
-        update_user_state(message.from_user.id, States.S_ALI_USER_ADDUSER_ADDED)
+        update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
                          text="Пользователь {} добавлен.".format(message.text))
     else:
