@@ -446,7 +446,7 @@ def user_adding(message):
             gh_reposname = dict_data['full_name'] if dict_data['full_name'] is not None else dict_data['id']
             db_object.execute(
                 "INSERT INTO repos(tg_user_id , gh_reposname, gh_repos_url, gh_repos_description) VALUES (%s, %s, %s, %s)",
-                (message.from_user.id, gh_reposname, dict_data['html_url'], dict_data['html_url']))
+                (message.from_user.id, gh_reposname, dict_data['html_url'], dict_data['description']))
             db_connection.commit()
             update_user_state(message.from_user.id, States.S_ALI_REPOS_ENTER)
             bot.send_message(chat_id=message.chat.id,
@@ -531,7 +531,7 @@ def alias_adding(message):
         db_object.execute(
             f"UPDATE gh_users SET tg_alias_user = '{alias}' WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
         db_connection.commit()
-        update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
+        update_user_state(message.from_user.id, States.S_ALI_USER_ADDUSER_ADDED)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
                          text="Пользователь {} добавлен.".format(message.text))
     else:
