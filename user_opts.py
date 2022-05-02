@@ -53,9 +53,9 @@ def aliases_kb_for_repos(db_object, user_id):
 
 def start_kb_for_user():
     button_1 = types.InlineKeyboardButton(User.choose,
-                                          callback_data=User.user_choice + " " + str(User.user_add))
+                                          callback_data=User.user_choice)
     button_2 = types.InlineKeyboardButton(User.user_new,
-                                          callback_data=User.user_add + " " + str(User.user_choice))
+                                          callback_data=User.user_add)
     button_3 = types.InlineKeyboardButton(User.back_inf,
                                           callback_data=" " + User.back_cal)
     mark = types.InlineKeyboardMarkup(row_width=1)
@@ -65,9 +65,9 @@ def start_kb_for_user():
 
 def start_kb_for_repos():
     button_1 = types.InlineKeyboardButton(User.choose,
-                                          callback_data=User.repos_choice + " " + str(User.repos_add))
+                                          callback_data=User.repos_choice)
     button_2 = types.InlineKeyboardButton(User.user_new,
-                                          callback_data=User.repos_add + " " + str(User.repos_choice))
+                                          callback_data=User.repos_add)
     button_3 = types.InlineKeyboardButton(User.back_inf,
                                           callback_data=" " + User.back_cal)
     mark = types.InlineKeyboardMarkup(row_width=1)
