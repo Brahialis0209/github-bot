@@ -59,6 +59,21 @@ def aliases_kb_for_repos(db_object, user_id):
     return mark
 
 
+def aliases_kb_for_pr(db_object, user_id):
+    db_object.execute(
+        f"SELECT tg_alias_pr FROM pulls WHERE tg_user_id = '{user_id}'")
+    result = db_object.fetchall()
+    len_hist = len(result)
+    mark = types.InlineKeyboardMarkup()
+    for i in range(len_hist):
+        mark.row(types.InlineKeyboardButton(str(result[i][0]).replace(" ", ""),
+                                            callback_data=str(result[i][0]).replace(" ",
+                                                                                    "") + " " + User.pr_alias_cal))
+    mark.row(types.InlineKeyboardButton(User.back_inf,
+                                        callback_data=" " + User.back_cal))
+    return mark
+
+
 def start_kb_for_user():
     button_1 = types.InlineKeyboardButton(User.choose,
                                           callback_data=User.user_choice)
@@ -76,6 +91,18 @@ def start_kb_for_repos():
                                           callback_data=User.repos_choice)
     button_2 = types.InlineKeyboardButton(User.user_new,
                                           callback_data=User.repos_add)
+    button_3 = types.InlineKeyboardButton(User.back_inf,
+                                          callback_data=" " + User.back_cal)
+    mark = types.InlineKeyboardMarkup(row_width=1)
+    mark.add(button_1, button_2, button_3)
+    return mark
+
+
+def start_kb_for_pr():
+    button_1 = types.InlineKeyboardButton(User.choose,
+                                          callback_data=User.pr_choice)
+    button_2 = types.InlineKeyboardButton(User.user_new,
+                                          callback_data=User.pr_add)
     button_3 = types.InlineKeyboardButton(User.back_inf,
                                           callback_data=" " + User.back_cal)
     mark = types.InlineKeyboardMarkup(row_width=1)

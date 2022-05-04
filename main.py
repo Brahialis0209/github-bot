@@ -702,6 +702,7 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
 
+
 #  pick back to main menu
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_PR_ADDED and
                                               call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
@@ -787,6 +788,7 @@ def query_handler(call):
                                   comments_num,
                                   changed_files),
                           reply_markup=ans.back_to_menu_and_back_kb())
+
 
 # ---------------------------------------------------------------------------------------------
 #  we enter alias for user

@@ -39,6 +39,18 @@ def repos_ali_added_kb(alias):
     return mark
 
 
+def pr_ali_added_kb(alias):
+    button_1 = types.InlineKeyboardButton(Answers.ali_pr_added_inf,
+                                          callback_data=Answers.ali_pr_added_cal + " " + str(alias))
+    button_3 = types.InlineKeyboardButton(Answers.back_to_menu_inf,
+                                          callback_data=" " + Answers.back_to_menu_cal)
+    # button_2 = types.InlineKeyboardButton(Answers.back_inf,
+    #                                       callback_data=" " + Answers.back_cal)
+    mark = types.InlineKeyboardMarkup(row_width=1)
+    mark.add(button_1, button_3)
+    return mark
+
+
 def back_to_menu_kb():
     button_2 = types.InlineKeyboardButton(Answers.back_to_menu_inf,
                                           callback_data=" " + Answers.back_to_menu_cal)
