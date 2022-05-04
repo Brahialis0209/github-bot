@@ -422,7 +422,7 @@ def query_handler(call):
 
 
 #  pick back to main menu
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_REPOS_ALI and
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_PR_ALI and
                                               call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
@@ -442,7 +442,8 @@ def query_handler(call):
     alias = call.data.split(" ")[0]
     user_id = call.message.chat.id
     db_object.execute(
-        f"SELECT gh_username, gh_user_avatar, gh_user_url FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
+        f"SELECT gh_username, gh_user_avatar, gh_user_url "
+        f"FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     name = result[0]
     url = result[2]
@@ -465,7 +466,8 @@ def query_handler(call):
     alias = call.data.split(" ")[0]
     user_id = call.message.chat.id
     db_object.execute(
-        f"SELECT gh_reposname, gh_repos_url, gh_repos_description FROM repos WHERE tg_user_id = '{user_id}' AND tg_alias_repos = '{alias}'")
+        f"SELECT gh_reposname, gh_repos_url, gh_repos_description "
+        f"FROM repos WHERE tg_user_id = '{user_id}' AND tg_alias_repos = '{alias}'")
     result = db_object.fetchone()
     name = result[0]
     url = result[1]
