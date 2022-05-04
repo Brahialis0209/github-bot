@@ -665,7 +665,7 @@ def user_adding(message):
             db_object.execute(
                 "INSERT INTO pulls(tg_user_id , gh_prid, gh_pr_url, gh_pr_title, "
                 "gh_pr_state, gh_commits, gh_changed_files) "
-                "VALUES (%s, %s, %s, %s)",
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)",
                 (message.from_user.id,
                  gh_prname,
                  dict_data['html_url'],
