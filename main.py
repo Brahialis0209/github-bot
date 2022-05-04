@@ -108,6 +108,33 @@ def start_message(message):
             update_user_state(message.chat.id, States.S_START)
 
 
+        # pr options
+        elif usr_status == States.S_PR_CONTROL:
+            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+            update_user_state(message.chat.id, States.S_START)
+        elif usr_status == States.S_CHOOSE_PR:
+            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+            update_user_state(message.chat.id, States.S_START)
+
+        elif usr_status == States.S_ADD_PR:
+            #  we enter start or any text and losed repository name or alias, therefore need to remove row in gh_userd with alias == null
+            db_object.execute(
+                f"DELETE FROM pulls  WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
+            db_connection.commit()
+            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+            update_user_state(message.chat.id, States.S_START)
+        elif usr_status == States.S_ALI_PR_ENTER:
+            #  we enter start or any text and losed repository name or alias, therefore need to remove row in gh_userd with alias == null
+            db_object.execute(
+                f"DELETE FROM pulls  WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
+            db_connection.commit()
+            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+            update_user_state(message.chat.id, States.S_START)
+        elif usr_status == States.S_ALI_PR_ADDED:
+            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+            update_user_state(message.chat.id, States.S_START)
+
+
 # ---------------------------------------------------------------------------------------------
 # START callback.handlers
 # -------------------------------
@@ -122,6 +149,15 @@ def query_handler(call):
 
 # "back" when we have chosen repos control options
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_REPOS_CONTROL
+                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
+    update_user_state(call.message.chat.id, States.S_START)
+
+
+# "back" when we have chosen pr control options
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_PR_CONTROL
                                               and call.data.split(" ")[-1] == user_opts.User.back_cal)
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -153,6 +189,18 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_REPOS_CONTROL)
 
 
+#  we pick pr control (1 step)
+def is_pr_control(data):
+    return ans.Answers.pr_control in data.split(' ')
+
+
+@bot.callback_query_handler(func=lambda call: is_pr_control(call.data))
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.start_kb_for_pr())
+    update_user_state(call.message.chat.id, States.S_PR_CONTROL)
+
+
 # -------------------------------
 # "back" when we choose user alias from history
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
@@ -170,6 +218,15 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_repos())
     update_user_state(call.message.chat.id, States.S_REPOS_CONTROL)
+
+
+# "back" when we choose pr alias from history
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_PR
+                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.start_kb_for_pr())
+    update_user_state(call.message.chat.id, States.S_PR_CONTROL)
 
 
 #  we pick check history of user aliases
@@ -224,6 +281,32 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_CHOOSE_REPOS)
 
 
+#  we pick check history of repos aliases
+def is_pr_choose(data):
+    return User.repos_choice in data.split(' ')
+
+
+@bot.callback_query_handler(func=lambda call: is_pr_choose(call.data))
+def query_handler(call):
+    db_object.execute(
+        f"SELECT tg_alias_pr FROM pulls WHERE tg_user_id = '{call.message.chat.id}'")
+    result = db_object.fetchall()
+    len_hist = len(result)
+    if len_hist == 0:
+        mark = types.InlineKeyboardMarkup()
+        mark.row(types.InlineKeyboardButton(User.back_inf,
+                                            callback_data=" " + User.back_cal))
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                              text="Список сохранённых alias пуст. Добавьте новый pull request.",
+                              reply_markup=mark)
+
+    else:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                              text=User.pr_history_aliases_ans,
+                              reply_markup=user_opts.aliases_kb_for_pr(db_object, call.message.chat.id))
+    update_user_state(call.message.chat.id, States.S_CHOOSE_PR)
+
+
 # -------------------------------
 # "back" when we choose add new user
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ADD_USER
@@ -241,6 +324,15 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_repos())
     update_user_state(call.message.chat.id, States.S_REPOS_CONTROL)
+
+
+# "back" when we choose add new pr
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ADD_PR
+                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.start_kb_for_pr())
+    update_user_state(call.message.chat.id, States.S_PR_CONTROL)
 
 
 #  we pick add user
@@ -269,6 +361,19 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_ADD_REPOS)
 
 
+#  we pick add pr
+def is_pr_add(data):
+    return User.repos_add in data.split(' ')
+
+
+@bot.callback_query_handler(func=lambda call: is_pr_add(call.data))
+def query_handler(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          reply_markup=ans.back_to_previous_kb(),
+                          text="Введите владельца, имя и номер pull request через '/':")
+    update_user_state(call.message.chat.id, States.S_ADD_PR)
+
+
 # -------------------------------
 # "back" when we looked alias from user history
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_USER_ALI and
@@ -288,6 +393,16 @@ def query_handler(call):
                           text=User.ans, reply_markup=user_opts.aliases_kb_for_repos(db_object, call.message.chat.id))
 
 
+# "back" when we looked alias from pr history
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_PR_ALI and
+                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+def query_handler(call):
+    update_user_state(call.message.chat.id, States.S_CHOOSE_PR)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=User.ans, reply_markup=user_opts.aliases_kb_for_pr(db_object, call.message.chat.id))
+
+
+# ----------------------------------------------------------------------------------------------
 #  pick back to main menu
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_USER_ALI and
                                               call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
@@ -306,6 +421,16 @@ def query_handler(call):
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
 
 
+#  pick back to main menu
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_REPOS_ALI and
+                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+def query_handler(call):
+    update_user_state(call.message.chat.id, States.S_START)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
+
+
+# ----------------------------------------------------------------------------------------------
 #  we pick alias from our history list
 def is_user_alias(data):
     return User.user_alias_cal in data.split(' ')
@@ -354,6 +479,41 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_LOOK_REPOS_ALI)
 
 
+#  we pick alias from our history list
+def is_pr_alias(data):
+    return User.pr_alias_cal in data.split(' ')
+
+
+@bot.callback_query_handler(func=lambda call: is_pr_alias(call.data)
+                                              and call.data.split(" ")[-1] != user_opts.User.back_cal)
+def query_handler(call):
+    alias = call.data.split(" ")[0]
+    user_id = call.message.chat.id
+    db_object.execute(
+        f"SELECT gh_prid, gh_pr_url, gh_pr_title, gh_pr_state, gh_commits, gh_changed_files "
+        f"FROM pulls WHERE tg_user_id = '{user_id}' AND tg_alias_pr = '{alias}'")
+    result = db_object.fetchone()
+    url = result[1]
+    title = result[2]
+    state = result[3]
+    comments_num = result[4]
+    changed_files = result[5]
+    bot.edit_message_text(chat_id=call.message.chat.id,
+                          message_id=call.message.message_id,
+                          text="🔘 Pull request: {}\n" \
+                               "🔘 Ссылка на pull request: {}\n" \
+                               "🔘 Статус: {}\n" \
+                               "🔘 Количество коммитов: {}\n" \
+                               "🔘 Количество измененных файлов: {}."
+                          .format(title,
+                                  url,
+                                  state,
+                                  comments_num,
+                                  changed_files),
+                          reply_markup=ans.back_to_menu_and_back_kb())
+    update_user_state(call.message.chat.id, States.S_LOOK_PR_ALI)
+
+
 # END callback.handlers
 # ---------------------------------------------------------------------------------------------
 
@@ -387,6 +547,21 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_ADD_REPOS)
 
 
+# "back" when we entered gh pull request
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_PR_ENTER and
+                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+def query_handler(call):
+    user_id = call.message.chat.id
+    db_object.execute(
+        f"DELETE FROM pulls  WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
+    db_connection.commit()
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          reply_markup=ans.back_to_previous_kb(),
+                          text="Введите владельца, имя и номер pull request через '/':")
+    update_user_state(call.message.chat.id, States.S_ADD_PR)
+
+
+# ---------------------------------------------------------------------------------------------
 #  we entered user gitname
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_USER)
 def user_adding(message):
@@ -397,13 +572,15 @@ def user_adding(message):
         dict_data = json.loads(r.text)
         name = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
         db_object.execute(
-            f"SELECT tg_user_id, tg_alias_user FROM gh_users WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{name}'")
+            f"SELECT tg_user_id, tg_alias_user "
+            f"FROM gh_users "
+            f"WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
             alias = str(result[0][1]).replace(" ", "")
             bot.send_message(chat_id=message.chat.id,
-                             text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. Введите другой ник.".format(
-                                 alias),
+                             text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. "
+                                  "Введите другой ник.".format(alias),
                              reply_markup=ans.back_to_previous_kb())
         else:
             dict_data = json.loads(r.text)
@@ -433,19 +610,22 @@ def user_adding(message):
         dict_data = json.loads(r.text)
         name = dict_data['full_name'] if dict_data['full_name'] is not None else dict_data['id']
         db_object.execute(
-            f"SELECT tg_user_id, tg_alias_repos FROM repos WHERE tg_user_id = '{message.from_user.id}' AND gh_reposname = '{name}'")
+            f"SELECT tg_user_id, tg_alias_repos "
+            f"FROM repos "
+            f"WHERE tg_user_id = '{message.from_user.id}' AND gh_reposname = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
             alias = str(result[0][1]).replace(" ", "")
             bot.send_message(chat_id=message.chat.id,
-                             text="Такой репозиторий уже существует в вашем сохранённом списке под псевдонимом: {}. Введите другой.".format(
-                                 alias),
+                             text="Такой репозиторий уже существует в вашем сохранённом списке под псевдонимом: {}. "
+                                  "Введите другой.".format(alias),
                              reply_markup=ans.back_to_previous_kb())
         else:
             dict_data = json.loads(r.text)
             gh_reposname = dict_data['full_name'] if dict_data['full_name'] is not None else dict_data['id']
             db_object.execute(
-                "INSERT INTO repos(tg_user_id , gh_reposname, gh_repos_url, gh_repos_description) VALUES (%s, %s, %s, %s)",
+                "INSERT INTO repos(tg_user_id , gh_reposname, gh_repos_url, gh_repos_description) "
+                "VALUES (%s, %s, %s, %s)",
                 (message.from_user.id, gh_reposname, dict_data['html_url'], dict_data['description']))
             db_connection.commit()
             update_user_state(message.from_user.id, States.S_ALI_REPOS_ENTER)
@@ -459,7 +639,52 @@ def user_adding(message):
                          reply_markup=ans.back_to_previous_kb())
 
 
-# -----------------------------------
+#  we entered pr gitname
+@bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_PR)
+def user_adding(message):
+    query_url = f"https://api.github.com/repos/{message.text}"
+    headers = {'Authorization': f'token {token}'}
+    r = requests.get(query_url, headers=headers)
+    if r.status_code == 200:
+        dict_data = json.loads(r.text)
+        name = dict_data['id']
+        db_object.execute(
+            f"SELECT tg_user_id, tg_alias_pr "
+            f"FROM pulls WHERE tg_user_id = '{message.from_user.id}' AND gh_prid = '{name}'")
+        result = db_object.fetchall()
+        if len(result) != 0:
+            alias = str(result[0][1]).replace(" ", "")
+            bot.send_message(chat_id=message.chat.id,
+                             text="Такой pull request уже существует в вашем сохранённом списке под псевдонимом: {}. "
+                                  "Введите другой.".format(alias),
+                             reply_markup=ans.back_to_previous_kb())
+        else:
+            dict_data = json.loads(r.text)
+            gh_prname = dict_data['id']
+            db_object.execute(
+                "INSERT INTO pulls(tg_user_id , gh_prid, gh_pr_url, gh_pr_title, "
+                "gh_pr_state, gh_commits, gh_changed_files) "
+                "VALUES (%s, %s, %s, %s)",
+                (message.from_user.id,
+                 gh_prname,
+                 dict_data['html_url'],
+                 dict_data['title'],
+                 dict_data['state'],
+                 dict_data['commits'],
+                 dict_data['changed_files']))
+            db_connection.commit()
+            update_user_state(message.from_user.id, States.S_ALI_PR_ENTER)
+            bot.send_message(chat_id=message.chat.id,
+                             reply_markup=ans.back_to_previous_kb(),
+                             text="Введите alias для нового pull request.")
+
+    else:
+        bot.send_message(chat_id=message.chat.id,
+                         text="Такой pull request найти не удалось, попробуйте ввести данные правильно.",
+                         reply_markup=ans.back_to_previous_kb())
+
+
+# ---------------------------------------------------------------------------------------------
 #  pick back to main menu
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_USER_ADDED and
                                               call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
@@ -467,6 +692,7 @@ def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
+
 
 #  pick back to main menu
 @bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ADDED and
@@ -476,7 +702,16 @@ def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
 
+#  pick back to main menu
+@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_PR_ADDED and
+                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+def query_handler(call):
+    update_user_state(call.message.chat.id, States.S_START)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
 
+
+# ---------------------------------------------------------------------------------------------
 def is_user_ali_added(data):
     return ans.Answers.ali_user_added_cal in data.split(' ')
 
@@ -501,7 +736,8 @@ def query_handler(call):
 def is_repos_ali_added(data):
     return ans.Answers.ali_repos_added_cal in data.split(' ')
 
-#  (added new alias) we enter give me info about user
+
+#  (added new alias) we enter give me info about repos
 @bot.callback_query_handler(func=lambda call: is_repos_ali_added(call.data))
 def query_handler(call):
     user_id = call.message.chat.id
@@ -520,6 +756,39 @@ def query_handler(call):
                           reply_markup=ans.back_to_menu_kb())
 
 
+def is_pr_ali_added(data):
+    return ans.Answers.ali_pr_added_cal in data.split(' ')
+
+
+#  (added new alias) we enter give me info about pr
+@bot.callback_query_handler(func=lambda call: is_pr_ali_added(call.data))
+def query_handler(call):
+    user_id = call.message.chat.id
+    alias = call.data.split(' ')[-1]
+    db_object.execute(
+        f"SELECT gh_prid, gh_pr_url, gh_pr_title, gh_pr_state, gh_commits, gh_changed_files "
+        f"FROM pulls WHERE tg_user_id = '{user_id}' AND tg_alias_pr = '{alias}'")
+    result = db_object.fetchone()
+    url = result[1]
+    title = result[2]
+    state = result[3]
+    comments_num = result[4]
+    changed_files = result[5]
+    bot.edit_message_text(chat_id=call.message.chat.id,
+                          message_id=call.message.message_id,
+                          text="🔘 Pull request: {}\n" \
+                               "🔘 Ссылка на pull request: {}\n" \
+                               "🔘 Статус: {}\n" \
+                               "🔘 Количество коммитов: {}\n" \
+                               "🔘 Количество измененных файлов: {}."
+                          .format(title,
+                                  url,
+                                  state,
+                                  comments_num,
+                                  changed_files),
+                          reply_markup=ans.back_to_menu_and_back_kb())
+
+# ---------------------------------------------------------------------------------------------
 #  we enter alias for user
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER_ENTER)
 def alias_adding(message):
@@ -553,6 +822,25 @@ def alias_adding(message):
         update_user_state(message.from_user.id, States.S_ALI_REPOS_ADDED)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.repos_ali_added_kb(alias),
                          text="Репозиторий {} добавлен.".format(message.text))
+    else:
+        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
+                         text="Такой alias уже есть. Введите уникальный.")
+
+
+#  we enter alias for pr
+@bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_PR_ENTER)
+def alias_adding(message):
+    user_id = message.from_user.id
+    alias = message.text
+    db_object.execute(f"SELECT gh_prid FROM pulls WHERE tg_alias_pr = '{alias}'")
+    result = db_object.fetchone()
+    if not result:
+        db_object.execute(
+            f"UPDATE pulls SET tg_alias_pr = '{alias}' WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
+        db_connection.commit()
+        update_user_state(message.from_user.id, States.S_ALI_PR_ADDED)
+        bot.send_message(chat_id=message.chat.id, reply_markup=ans.pr_ali_added_kb(alias),
+                         text="Pull request {} добавлен.".format(message.text))
     else:
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
                          text="Такой alias уже есть. Введите уникальный.")

@@ -20,6 +20,14 @@ class States:
     S_ALI_REPOS_ENTER = 11  # add user alias
     S_ALI_REPOS_ADDED = 12  # added user alias
 
+    # pr info
+    S_PR_CONTROL = 13  # user pick user's control
+    S_CHOOSE_PR = 14  # choose usr from db
+    S_LOOK_PR_ALI = 15  # look alias from history
+    S_ADD_PR = 16  # add new usr
+    S_ALI_PR_ENTER = 17  # add user alias
+    S_ALI_PR_ADDED = 18  # added user alias
+
 
 def aliases_kb_for_user(db_object, user_id):
     db_object.execute(
@@ -101,3 +109,7 @@ class User:
     repos_add = "repos_add"
     repos_choice = "repos_choice"
     repos_url = "repos_url"
+
+    pr_add = "pr_add"
+    pr_choice = "pr_choice"
+    pr_url = "pr_url"

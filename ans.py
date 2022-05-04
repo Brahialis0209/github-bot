@@ -70,9 +70,11 @@ class Answers:
 
     ali_user_added_inf = "Вывести информацию о пользователе"
     ali_repos_added_inf = "Вывести информацию о репозитории"
+    ali_pr_added_inf = "Вывести информацию о pull request"
 
     ali_user_added_cal = "ali_user_added_cal"
     ali_repos_added_cal = "ali_repos_added_cal"
+    ali_pr_added_cal = "ali_pr_added_cal"
 
     back_to_menu_cal = "back_to_menu_cal"
     back_inf = "Назад"
@@ -84,7 +86,7 @@ class Answers:
     start_markup = types.ReplyKeyboardMarkup()
     start_inf = "Старт"
     back_to_menu_inf = "Вернуться в главное меню"
-    repo_inf = "Получить информацию о репозитории (В разработке)"
+    repo_inf = "Получить информацию о репозитории"
     user_inf = "Получить информацию о пользователе"
     pr_inf = "Получить информацию о pull request(В разработке)"
     start_markup.row(user_inf)
