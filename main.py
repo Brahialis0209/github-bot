@@ -283,7 +283,7 @@ def query_handler(call):
 
 #  we pick check history of repos aliases
 def is_pr_choose(data):
-    return User.repos_choice in data.split(' ')
+    return User.pr_choice in data.split(' ')
 
 
 @bot.callback_query_handler(func=lambda call: is_pr_choose(call.data))
@@ -363,7 +363,7 @@ def query_handler(call):
 
 #  we pick add pr
 def is_pr_add(data):
-    return User.repos_add in data.split(' ')
+    return User.pr_add in data.split(' ')
 
 
 @bot.callback_query_handler(func=lambda call: is_pr_add(call.data))
