@@ -642,7 +642,8 @@ def user_adding(message):
 #  we entered pr gitname
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ADD_PR)
 def user_adding(message):
-    query_url = f"https://api.github.com/repos/{message.text}"
+    tokens = message.text.split('/')
+    query_url = f"https://api.github.com/repos/{tokens[0]}/{tokens[1]}/pulls/{tokens[2]}"
     headers = {'Authorization': f'token {token}'}
     r = requests.get(query_url, headers=headers)
     if r.status_code == 200:
