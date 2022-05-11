@@ -357,7 +357,8 @@ def is_repos_add(data):
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           reply_markup=ans.back_to_previous_kb(),
-                          text="Введите владельца и имя репозитория через '/':")
+                          text="Введите владельца и имя репозитория через '/' \n"
+                               "Пример: Brahialis0209/github-bot")
     update_user_state(call.message.chat.id, States.S_ADD_REPOS)
 
 
@@ -370,7 +371,8 @@ def is_pr_add(data):
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           reply_markup=ans.back_to_previous_kb(),
-                          text="Введите владельца, имя и номер pull request через '/':")
+                          text="Введите владельца, имя и номер pull request через '/' \n"
+                               "Пример: Brahialis0209/github-bot/1")
     update_user_state(call.message.chat.id, States.S_ADD_PR)
 
 
