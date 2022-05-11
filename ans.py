@@ -17,7 +17,7 @@ def start_kb_for_all():
 
 def user_ali_added_kb(alias):
     button_1 = types.InlineKeyboardButton(Answers.ali_user_added_inf,
-                                          callback_data=Answers.ali_user_added_cal + " " + str(alias))
+                                          callback_data=alias + ' ' + Answers.ali_repos_added_cal)
     button_3 = types.InlineKeyboardButton(Answers.back_to_menu_inf,
                                           callback_data=" " + Answers.back_to_menu_cal)
     # button_2 = types.InlineKeyboardButton(Answers.back_inf,
@@ -29,7 +29,7 @@ def user_ali_added_kb(alias):
 
 def repos_ali_added_kb(alias):
     button_1 = types.InlineKeyboardButton(Answers.ali_repos_added_inf,
-                                          callback_data=Answers.ali_repos_added_cal + " " + str(alias))
+                                          callback_data=alias + ' ' + Answers.ali_repos_added_cal)
     button_3 = types.InlineKeyboardButton(Answers.back_to_menu_inf,
                                           callback_data=" " + Answers.back_to_menu_cal)
     # button_2 = types.InlineKeyboardButton(Answers.back_inf,
@@ -41,7 +41,7 @@ def repos_ali_added_kb(alias):
 
 def pr_ali_added_kb(alias):
     button_1 = types.InlineKeyboardButton(Answers.ali_pr_added_inf,
-                                          callback_data=Answers.ali_pr_added_cal + " " + str(alias))
+                                          callback_data=alias + ' ' + Answers.ali_repos_added_cal)
     button_3 = types.InlineKeyboardButton(Answers.back_to_menu_inf,
                                           callback_data=" " + Answers.back_to_menu_cal)
     # button_2 = types.InlineKeyboardButton(Answers.back_inf,

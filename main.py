@@ -441,7 +441,7 @@ def is_user_alias(data):
 @bot.callback_query_handler(func=lambda call: is_user_alias(call.data)
                                               and call.data.split(" ")[-1] != user_opts.User.back_cal)
 def query_handler(call):
-    alias = call.data.split(" ")[0]
+    alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
     db_object.execute(
         f"SELECT gh_username, gh_user_avatar, gh_user_url "
@@ -465,7 +465,7 @@ def is_repos_alias(data):
 @bot.callback_query_handler(func=lambda call: is_repos_alias(call.data)
                                               and call.data.split(" ")[-1] != user_opts.User.back_cal)
 def query_handler(call):
-    alias = call.data.split(" ")[0]
+    alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
     db_object.execute(
         f"SELECT gh_reposname, gh_repos_url, gh_repos_description "
@@ -491,7 +491,7 @@ def is_pr_alias(data):
 @bot.callback_query_handler(func=lambda call: is_pr_alias(call.data)
                                               and call.data.split(" ")[-1] != user_opts.User.back_cal)
 def query_handler(call):
-    alias = call.data.split(" ")[0]
+    alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
     db_object.execute(
         f"SELECT gh_prid, gh_pr_url, gh_pr_title, gh_pr_state, gh_commits, gh_changed_files "
@@ -581,7 +581,7 @@ def user_adding(message):
             f"WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
-            alias = str(result[0][1]).strip()
+            alias = result[0][1]
             bot.send_message(chat_id=message.chat.id,
                              text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. "
                                   "Введите другой ник.".format(alias),
@@ -619,7 +619,7 @@ def user_adding(message):
             f"WHERE tg_user_id = '{message.from_user.id}' AND gh_reposname = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
-            alias = str(result[0][1]).strip()
+            alias = result[0][1]
             bot.send_message(chat_id=message.chat.id,
                              text="Такой репозиторий уже существует в вашем сохранённом списке под псевдонимом: {}. "
                                   "Введите другой.".format(alias),
@@ -658,7 +658,7 @@ def user_adding(message):
             f"FROM pulls WHERE tg_user_id = '{message.from_user.id}' AND gh_prid = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
-            alias = str(result[0][1]).strip()
+            alias = result[0][1]
             bot.send_message(chat_id=message.chat.id,
                              text="Такой pull request уже существует в вашем сохранённом списке под псевдонимом: {}. "
                                   "Введите другой.".format(alias),
@@ -726,7 +726,7 @@ def is_user_ali_added(data):
 @bot.callback_query_handler(func=lambda call: is_user_ali_added(call.data))
 def query_handler(call):
     user_id = call.message.chat.id
-    alias = call.data.split(' ')[-1]
+    alias = ' '.join(call.data.split(' ')[:-1])
     db_object.execute(
         f"SELECT gh_username, gh_user_avatar, gh_user_url FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
@@ -747,7 +747,7 @@ def is_repos_ali_added(data):
 @bot.callback_query_handler(func=lambda call: is_repos_ali_added(call.data))
 def query_handler(call):
     user_id = call.message.chat.id
-    alias = call.data.split(' ')[-1]
+    alias = ' '.join(call.data.split(' ')[:-1])
     db_object.execute(
         f"SELECT gh_reposname, gh_repos_url, gh_repos_description FROM repos WHERE tg_user_id = '{user_id}' AND tg_alias_repos = '{alias}'")
     result = db_object.fetchone()
@@ -770,7 +770,7 @@ def is_pr_ali_added(data):
 @bot.callback_query_handler(func=lambda call: is_pr_ali_added(call.data))
 def query_handler(call):
     user_id = call.message.chat.id
-    alias = call.data.split(' ')[-1]
+    alias = ' '.join(call.data.split(' ')[:-1])
     db_object.execute(
         f"SELECT gh_prid, gh_pr_url, gh_pr_title, gh_pr_state, gh_commits, gh_changed_files "
         f"FROM pulls WHERE tg_user_id = '{user_id}' AND tg_alias_pr = '{alias}'")
@@ -800,7 +800,7 @@ def query_handler(call):
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_USER_ENTER)
 def alias_adding(message):
     user_id = message.from_user.id
-    alias = message.text
+    alias = ' '.join(message.text.split())
     db_object.execute(f"SELECT gh_username FROM gh_users WHERE tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     if not result:
@@ -809,7 +809,7 @@ def alias_adding(message):
         db_connection.commit()
         update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
-                         text="Пользователь {} добавлен.".format(message.text))
+                         text="Пользователь {} добавлен.".format(alias))
     else:
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
                          text="Такой alias уже есть. Введите уникальный.")
@@ -819,7 +819,7 @@ def alias_adding(message):
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_REPOS_ENTER)
 def alias_adding(message):
     user_id = message.from_user.id
-    alias = message.text
+    alias = ' '.join(message.text.split())
     db_object.execute(f"SELECT gh_reposname FROM repos WHERE tg_alias_repos = '{alias}'")
     result = db_object.fetchone()
     if not result:
@@ -828,7 +828,7 @@ def alias_adding(message):
         db_connection.commit()
         update_user_state(message.from_user.id, States.S_ALI_REPOS_ADDED)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.repos_ali_added_kb(alias),
-                         text="Репозиторий {} добавлен.".format(message.text))
+                         text="Репозиторий {} добавлен.".format(alias))
     else:
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
                          text="Такой alias уже есть. Введите уникальный.")
@@ -838,7 +838,7 @@ def alias_adding(message):
 @bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_ALI_PR_ENTER)
 def alias_adding(message):
     user_id = message.from_user.id
-    alias = message.text
+    alias = ' '.join(message.text.split())
     db_object.execute(f"SELECT gh_prid FROM pulls WHERE tg_alias_pr = '{alias}'")
     result = db_object.fetchone()
     if not result:
@@ -847,7 +847,7 @@ def alias_adding(message):
         db_connection.commit()
         update_user_state(message.from_user.id, States.S_ALI_PR_ADDED)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.pr_ali_added_kb(alias),
-                         text="Pull request {} добавлен.".format(message.text))
+                         text="Pull request {} добавлен.".format(alias))
     else:
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
                          text="Такой alias уже есть. Введите уникальный.")
