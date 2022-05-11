@@ -100,7 +100,7 @@ class Answers:
     back_to_menu_inf = "Вернуться в главное меню"
     repo_inf = "Получить информацию о репозитории"
     user_inf = "Получить информацию о пользователе"
-    pr_inf = "Получить информацию о pull request(В разработке)"
+    pr_inf = "Получить информацию о pull request"
     start_markup.row(user_inf)
     start_markup.row(repo_inf)
     start_markup.row(pr_inf)
