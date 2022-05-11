@@ -36,9 +36,8 @@ def aliases_kb_for_user(db_object, user_id):
     len_hist = len(result)
     mark = types.InlineKeyboardMarkup()
     for i in range(len_hist):
-        mark.row(types.InlineKeyboardButton(str(result[i][0]).replace(" ", ""),
-                                            callback_data=str(result[i][0]).replace(" ",
-                                                                                    "") + " " + User.user_alias_cal))
+        mark.row(types.InlineKeyboardButton(str(result[i][0]).strip(),
+                                            callback_data=str(result[i][0]).strip() + " " + User.user_alias_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark
@@ -51,9 +50,8 @@ def aliases_kb_for_repos(db_object, user_id):
     len_hist = len(result)
     mark = types.InlineKeyboardMarkup()
     for i in range(len_hist):
-        mark.row(types.InlineKeyboardButton(str(result[i][0]).replace(" ", ""),
-                                            callback_data=str(result[i][0]).replace(" ",
-                                                                                    "") + " " + User.repos_alias_cal))
+        mark.row(types.InlineKeyboardButton(str(result[i][0]).strip(),
+                                            callback_data=str(result[i][0]).strip() + " " + User.repos_alias_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark
@@ -66,9 +64,8 @@ def aliases_kb_for_pr(db_object, user_id):
     len_hist = len(result)
     mark = types.InlineKeyboardMarkup()
     for i in range(len_hist):
-        mark.row(types.InlineKeyboardButton(str(result[i][0]).replace(" ", ""),
-                                            callback_data=str(result[i][0]).replace(" ",
-                                                                                    "") + " " + User.pr_alias_cal))
+        mark.row(types.InlineKeyboardButton(str(result[i][0]).strip(),
+                                            callback_data=str(result[i][0]).strip() + " " + User.pr_alias_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark

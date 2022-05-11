@@ -581,7 +581,7 @@ def user_adding(message):
             f"WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
-            alias = str(result[0][1]).replace(" ", "")
+            alias = str(result[0][1]).strip()
             bot.send_message(chat_id=message.chat.id,
                              text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. "
                                   "Введите другой ник.".format(alias),
@@ -619,7 +619,7 @@ def user_adding(message):
             f"WHERE tg_user_id = '{message.from_user.id}' AND gh_reposname = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
-            alias = str(result[0][1]).replace(" ", "")
+            alias = str(result[0][1]).strip()
             bot.send_message(chat_id=message.chat.id,
                              text="Такой репозиторий уже существует в вашем сохранённом списке под псевдонимом: {}. "
                                   "Введите другой.".format(alias),
@@ -658,7 +658,7 @@ def user_adding(message):
             f"FROM pulls WHERE tg_user_id = '{message.from_user.id}' AND gh_prid = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
-            alias = str(result[0][1]).replace(" ", "")
+            alias = str(result[0][1]).strip()
             bot.send_message(chat_id=message.chat.id,
                              text="Такой pull request уже существует в вашем сохранённом списке под псевдонимом: {}. "
                                   "Введите другой.".format(alias),
