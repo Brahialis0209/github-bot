@@ -138,7 +138,9 @@ def start_message(message):
         elif usr_status == States.S_ALI_PR_ADDED:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
             update_user_state(message.chat.id, States.S_START)
-
+        else:
+            bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
+            update_user_state(message.chat.id, States.S_START)
 
 # ---------------------------------------------------------------------------------------------
 # START callback.handlers
