@@ -64,14 +64,16 @@ def start_message(message):
             update_user_state(message.chat.id, States.S_START)
 
         elif usr_status == States.S_ADD_USER:
-            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
+            #  we enter start or any text and losed username or alias,
+            #  therefore need to remove row in gh_userd with alias == null
             db_object.execute(
                 f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
             db_connection.commit()
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
             update_user_state(message.chat.id, States.S_START)
         elif usr_status == States.S_ALI_USER_ENTER:
-            #  we enter start or any text and losed username or alias, therefore need to remove row in gh_userd with alias == null
+            #  we enter start or any text and losed username or alias,
+            #  therefore need to remove row in gh_userd with alias == null
             db_object.execute(
                 f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
             db_connection.commit()
@@ -90,14 +92,16 @@ def start_message(message):
             update_user_state(message.chat.id, States.S_START)
 
         elif usr_status == States.S_ADD_REPOS:
-            #  we enter start or any text and losed repository name or alias, therefore need to remove row in gh_userd with alias == null
+            #  we enter start or any text and losed repository name or alias,
+            #  therefore need to remove row in gh_userd with alias == null
             db_object.execute(
                 f"DELETE FROM repos  WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
             db_connection.commit()
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
             update_user_state(message.chat.id, States.S_START)
         elif usr_status == States.S_ALI_REPOS_ENTER:
-            #  we enter start or any text and losed repository name or alias, therefore need to remove row in gh_userd with alias == null
+            #  we enter start or any text and losed repository name or alias,
+            #  therefore need to remove row in gh_userd with alias == null
             db_object.execute(
                 f"DELETE FROM repos  WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
             db_connection.commit()
@@ -106,7 +110,6 @@ def start_message(message):
         elif usr_status == States.S_ALI_REPOS_ADDED:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
             update_user_state(message.chat.id, States.S_START)
-
 
         # pr options
         elif usr_status == States.S_PR_CONTROL:
@@ -117,14 +120,16 @@ def start_message(message):
             update_user_state(message.chat.id, States.S_START)
 
         elif usr_status == States.S_ADD_PR:
-            #  we enter start or any text and losed repository name or alias, therefore need to remove row in gh_userd with alias == null
+            #  we enter start or any text and losed repository name or alias,
+            #  therefore need to remove row in gh_userd with alias == null
             db_object.execute(
                 f"DELETE FROM pulls  WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
             db_connection.commit()
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
             update_user_state(message.chat.id, States.S_START)
         elif usr_status == States.S_ALI_PR_ENTER:
-            #  we enter start or any text and losed repository name or alias, therefore need to remove row in gh_userd with alias == null
+            #  we enter start or any text and losed repository name or alias,
+            #  therefore need to remove row in gh_userd with alias == null
             db_object.execute(
                 f"DELETE FROM pulls  WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
             db_connection.commit()
@@ -139,8 +144,9 @@ def start_message(message):
 # START callback.handlers
 # -------------------------------
 # "back" when we have chosen user control options
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_USER_CONTROL
-                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_USER_CONTROL
+        and call.data.split(" ")[-1] == user_opts.User.back_cal))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
@@ -148,8 +154,9 @@ def query_handler(call):
 
 
 # "back" when we have chosen repos control options
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_REPOS_CONTROL
-                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_REPOS_CONTROL
+        and call.data.split(" ")[-1] == user_opts.User.back_cal))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
@@ -157,8 +164,9 @@ def query_handler(call):
 
 
 # "back" when we have chosen pr control options
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_PR_CONTROL
-                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_PR_CONTROL
+        and call.data.split(" ")[-1] == user_opts.User.back_cal))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=Answers.start_ans, reply_markup=ans.start_kb_for_all())
@@ -203,8 +211,9 @@ def query_handler(call):
 
 # -------------------------------
 # "back" when we choose user alias from history
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
-                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
+        and call.data.split(" ")[-1] == user_opts.User.back_cal))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_user())
@@ -212,8 +221,9 @@ def query_handler(call):
 
 
 # "back" when we choose repos alias from history
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_REPOS
-                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_CHOOSE_REPOS
+        and call.data.split(" ")[-1] == user_opts.User.back_cal))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_repos())
@@ -221,8 +231,9 @@ def query_handler(call):
 
 
 # "back" when we choose pr alias from history
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_CHOOSE_PR
-                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_CHOOSE_PR
+        and call.data.split(" ")[-1] == user_opts.User.back_cal))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_pr())
@@ -309,8 +320,9 @@ def query_handler(call):
 
 # -------------------------------
 # "back" when we choose add new user
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ADD_USER
-                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_ADD_USER
+        and call.data.split(" ")[-1] == user_opts.User.back_cal))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_user())
@@ -318,8 +330,9 @@ def query_handler(call):
 
 
 # "back" when we choose add new repos
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ADD_REPOS
-                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_ADD_REPOS
+        and call.data.split(" ")[-1] == user_opts.User.back_cal))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_repos())
@@ -327,8 +340,9 @@ def query_handler(call):
 
 
 # "back" when we choose add new pr
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ADD_PR
-                                              and call.data.split(" ")[-1] == user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_ADD_PR
+        and call.data.split(" ")[-1] == user_opts.User.back_cal))
 def query_handler(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                           text=User.ans, reply_markup=user_opts.start_kb_for_pr())
@@ -378,8 +392,9 @@ def query_handler(call):
 
 # -------------------------------
 # "back" when we looked alias from user history
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_USER_ALI and
-                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_LOOK_USER_ALI and
+        call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -387,8 +402,9 @@ def query_handler(call):
 
 
 # "back" when we looked alias from repos history
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_REPOS_ALI and
-                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_LOOK_REPOS_ALI and
+        call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_CHOOSE_REPOS)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -396,8 +412,9 @@ def query_handler(call):
 
 
 # "back" when we looked alias from pr history
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_PR_ALI and
-                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_LOOK_PR_ALI and
+        call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_CHOOSE_PR)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -406,8 +423,9 @@ def query_handler(call):
 
 # ----------------------------------------------------------------------------------------------
 #  pick back to main menu
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_USER_ALI and
-                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_LOOK_USER_ALI and
+        call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -415,8 +433,9 @@ def query_handler(call):
 
 
 #  pick back to main menu
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_REPOS_ALI and
-                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_LOOK_REPOS_ALI and
+        call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -424,8 +443,9 @@ def query_handler(call):
 
 
 #  pick back to main menu
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_LOOK_PR_ALI and
-                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_LOOK_PR_ALI and
+        call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -438,8 +458,9 @@ def is_user_alias(data):
     return User.user_alias_cal in data.split(' ')
 
 
-@bot.callback_query_handler(func=lambda call: is_user_alias(call.data)
-                                              and call.data.split(" ")[-1] != user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        is_user_alias(call.data)
+        and call.data.split(" ")[-1] != user_opts.User.back_cal))
 def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
@@ -451,7 +472,7 @@ def query_handler(call):
     url = result[2]
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
-                          text="🔘 Имя: {}\n" \
+                          text="🔘 Имя: {}\n"
                                "🔘 Ссылка на пользователя: {}.".format(name, url),
                           reply_markup=ans.back_to_menu_and_back_kb())
     update_user_state(call.message.chat.id, States.S_LOOK_USER_ALI)
@@ -462,8 +483,9 @@ def is_repos_alias(data):
     return User.repos_alias_cal in data.split(' ')
 
 
-@bot.callback_query_handler(func=lambda call: is_repos_alias(call.data)
-                                              and call.data.split(" ")[-1] != user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        is_repos_alias(call.data)
+        and call.data.split(" ")[-1] != user_opts.User.back_cal))
 def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
@@ -476,8 +498,8 @@ def query_handler(call):
     description = result[2]
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
-                          text="🔘 Репозиторий: {}\n" \
-                               "🔘 Ссылка на репозиторий: {}\n" \
+                          text="🔘 Репозиторий: {}\n"
+                               "🔘 Ссылка на репозиторий: {}\n"
                                "🔘 Описание: {}.".format(name, url, description),
                           reply_markup=ans.back_to_menu_and_back_kb())
     update_user_state(call.message.chat.id, States.S_LOOK_REPOS_ALI)
@@ -488,8 +510,9 @@ def is_pr_alias(data):
     return User.pr_alias_cal in data.split(' ')
 
 
-@bot.callback_query_handler(func=lambda call: is_pr_alias(call.data)
-                                              and call.data.split(" ")[-1] != user_opts.User.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        is_pr_alias(call.data)
+        and call.data.split(" ")[-1] != user_opts.User.back_cal))
 def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
@@ -504,10 +527,10 @@ def query_handler(call):
     changed_files = result[5]
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
-                          text="🔘 Pull request: {}\n" \
-                               "🔘 Ссылка на pull request: {}\n" \
-                               "🔘 Статус: {}\n" \
-                               "🔘 Количество коммитов: {}\n" \
+                          text="🔘 Pull request: {}\n"
+                               "🔘 Ссылка на pull request: {}\n"
+                               "🔘 Статус: {}\n"
+                               "🔘 Количество коммитов: {}\n"
                                "🔘 Количество измененных файлов: {}."
                           .format(title,
                                   url,
@@ -524,8 +547,9 @@ def query_handler(call):
 # ---------------------------------------------------------------------------------------------
 # START MESS HANDLERS
 # "back" when we entered gh username
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_USER_ENTER and
-                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_ALI_USER_ENTER and
+        call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
     user_id = call.message.chat.id
     db_object.execute(
@@ -538,8 +562,9 @@ def query_handler(call):
 
 
 # "back" when we entered gh repository
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ENTER and
-                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ENTER and
+        call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
     user_id = call.message.chat.id
     db_object.execute(
@@ -553,8 +578,9 @@ def query_handler(call):
 
 
 # "back" when we entered gh pull request
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_PR_ENTER and
-                                              call.data.split(" ")[-1] == ans.Answers.back_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_ALI_PR_ENTER and
+        call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
     user_id = call.message.chat.id
     db_object.execute(
@@ -693,8 +719,9 @@ def user_adding(message):
 
 # ---------------------------------------------------------------------------------------------
 #  pick back to main menu
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_USER_ADDED and
-                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_ALI_USER_ADDED and
+        call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -702,8 +729,9 @@ def query_handler(call):
 
 
 #  pick back to main menu
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ADDED and
-                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ADDED and
+        call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -711,8 +739,9 @@ def query_handler(call):
 
 
 #  pick back to main menu
-@bot.callback_query_handler(func=lambda call: get_user_state(call.message.chat.id) == States.S_ALI_PR_ADDED and
-                                              call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal)
+@bot.callback_query_handler(func=lambda call: (
+        get_user_state(call.message.chat.id) == States.S_ALI_PR_ADDED and
+        call.data.split(" ")[-1] == ans.Answers.back_to_menu_cal))
 def query_handler(call):
     update_user_state(call.message.chat.id, States.S_START)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -730,13 +759,15 @@ def query_handler(call):
     user_id = call.message.chat.id
     alias = ' '.join(call.data.split(' ')[:-1])
     db_object.execute(
-        f"SELECT gh_username, gh_user_avatar, gh_user_url FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
+        f"SELECT gh_username, gh_user_avatar, gh_user_url "
+        f"FROM gh_users "
+        f"WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     name = result[0]
     url = result[2]
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
-                          text="🔘 Имя: {}\n" \
+                          text="🔘 Имя: {}\n"
                                "🔘 Ссылка на пользователя: {}.".format(name, url),
                           reply_markup=ans.back_to_menu_kb())
 
@@ -751,15 +782,17 @@ def query_handler(call):
     user_id = call.message.chat.id
     alias = ' '.join(call.data.split(' ')[:-1])
     db_object.execute(
-        f"SELECT gh_reposname, gh_repos_url, gh_repos_description FROM repos WHERE tg_user_id = '{user_id}' AND tg_alias_repos = '{alias}'")
+        f"SELECT gh_reposname, gh_repos_url, gh_repos_description "
+        f"FROM repos "
+        f"WHERE tg_user_id = '{user_id}' AND tg_alias_repos = '{alias}'")
     result = db_object.fetchone()
     name = result[0]
     url = result[1]
     description = result[2]
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
-                          text="🔘 Репозиторий: {}\n" \
-                               "🔘 Ссылка на репозиторий: {}\n" \
+                          text="🔘 Репозиторий: {}\n"
+                               "🔘 Ссылка на репозиторий: {}\n"
                                "🔘 Описание: {}.".format(name, url, description),
                           reply_markup=ans.back_to_menu_kb())
 
@@ -784,10 +817,10 @@ def query_handler(call):
     changed_files = result[5]
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
-                          text="🔘 Pull request: {}\n" \
-                               "🔘 Ссылка на pull request: {}\n" \
-                               "🔘 Статус: {}\n" \
-                               "🔘 Количество коммитов: {}\n" \
+                          text="🔘 Pull request: {}\n"
+                               "🔘 Ссылка на pull request: {}\n"
+                               "🔘 Статус: {}\n"
+                               "🔘 Количество коммитов: {}\n"
                                "🔘 Количество измененных файлов: {}."
                           .format(title,
                                   url,
