@@ -69,9 +69,9 @@ def back_to_menu_and_back_kb():
     return mark
 
 
-def back_to_previous_kb():
+def back_to_previous_kb(additional_info=''):
     button = types.InlineKeyboardButton(Answers.back_inf,
-                                        callback_data=" " + Answers.back_cal)
+                                        callback_data=additional_info + " " + Answers.back_cal)
     mark = types.InlineKeyboardMarkup(row_width=1)
     mark.add(button)
     return mark

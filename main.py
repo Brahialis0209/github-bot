@@ -495,16 +495,16 @@ def query_handler(call):
 
 @bot.callback_query_handler(func=lambda call: (
         is_user_alias(call.data)
-        and get_user_state(call.message.chat.id) == States.S_ADD_REPOS  # user control branch
+        and get_user_state(call.message.chat.id) == States.S_ADD_REPOS  # repos control branch
         and call.data.split(" ")[-1] != user_opts.User.back_cal))
 def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
     db_object.execute(
-        f"SELECT gh_username, gh_user_avatar, gh_user_url "
+        f"SELECT gh_username, gh_user_avatar, gh_user_url, login"
         f"FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
-    name = result[2].split('/')[-1]
+    name = result[3]
     query_url = f"https://api.github.com/users/{name}/repos"
     headers = {'Authorization': f'token {token}'}
     r = requests.get(query_url, headers=headers)
@@ -610,21 +610,22 @@ def query_handler(call):
                           text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
 
+#
+# # "back" when we entered gh repository
+# @bot.callback_query_handler(func=lambda call: (
+#         get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ENTER and
+#         call.data.split(" ")[-1] == ans.Answers.back_cal))
+# def query_handler(call):
+#     user_id = call.message.chat.id
+#     db_object.execute(
+#         f"DELETE FROM repos  WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
+#     db_connection.commit()
+#     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+#                           reply_markup=ans.back_to_previous_kb(),
+#                           text="Введите владельца и имя репозитория через '/' \n"
+#                                "Пример: Brahialis0209/github-bot")
+#     update_user_state(call.message.chat.id, States.S_ADD_REPOS)
 
-# "back" when we entered gh repository
-@bot.callback_query_handler(func=lambda call: (
-        get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ENTER and
-        call.data.split(" ")[-1] == ans.Answers.back_cal))
-def query_handler(call):
-    user_id = call.message.chat.id
-    db_object.execute(
-        f"DELETE FROM repos  WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
-    db_connection.commit()
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                          reply_markup=ans.back_to_previous_kb(),
-                          text="Введите владельца и имя репозитория через '/' \n"
-                               "Пример: Brahialis0209/github-bot")
-    update_user_state(call.message.chat.id, States.S_ADD_REPOS)
 
 
 # "back" when we entered gh pull request
@@ -668,8 +669,9 @@ def user_adding(message):
             dict_data = json.loads(r.text)
             gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
             db_object.execute(
-                "INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar, gh_user_url) VALUES (%s, %s, %s, %s)",
-                (message.from_user.id, gh_username, dict_data['avatar_url'], dict_data['html_url']))
+                "INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar, gh_user_url, login) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (message.from_user.id, gh_username, dict_data['avatar_url'], dict_data['html_url'], dict_data['login']))
             db_connection.commit()
             update_user_state(message.from_user.id, States.S_ALI_USER_ENTER)
             bot.send_message(chat_id=message.chat.id,
@@ -688,7 +690,14 @@ def is_repos_from_gh(data):
 
 #  we entered repos gitname
 @bot.callback_query_handler(func=lambda call: is_repos_from_gh(call.data))
-def user_adding(call):
+def repos_adding(call):
+    user_login = call.data.split('/')[0]
+    db_object.execute(
+        f"SELECT tg_user_id, tg_alias_user "
+        f"FROM gh_users "
+        f"WHERE tg_user_id = '{call.from_user.id}' AND login = '{user_login}'")
+    user_alias = db_object.fetchall()[1]
+
     query_url = f"https://api.github.com/repos/{call.data.split()[0]}"
     headers = {'Authorization': f'token {token}'}
     r = requests.get(query_url, headers=headers)
@@ -705,7 +714,7 @@ def user_adding(call):
             bot.send_message(chat_id=call.message.chat.id,
                              text="Такой репозиторий уже существует в вашем сохранённом списке под псевдонимом: {}. "
                                   "Введите другой.".format(alias),
-                             reply_markup=ans.back_to_previous_kb())
+                             reply_markup=ans.back_to_previous_kb(user_alias))
         else:
             dict_data = json.loads(r.text)
             gh_reposname = dict_data['full_name'] if dict_data['full_name'] is not None else dict_data['id']
@@ -716,13 +725,13 @@ def user_adding(call):
             db_connection.commit()
             update_user_state(call.from_user.id, States.S_ALI_REPOS_ENTER)
             bot.send_message(chat_id=call.message.chat.id,
-                             reply_markup=ans.back_to_previous_kb(),
+                             reply_markup=ans.back_to_previous_kb(user_alias),
                              text="Введите alias для нового репозитория.")
 
     else:
         bot.send_message(chat_id=call.message.chat.id,
                          text="Такой репозиторий найти не удалось, попробуйте ввести данные правильно.",
-                         reply_markup=ans.back_to_previous_kb())
+                         reply_markup=ans.back_to_previous_kb(user_alias))
 
 
 #  we entered pr gitname
