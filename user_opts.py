@@ -13,20 +13,21 @@ class States:
     S_ALI_USER_ADDED = 6  # added user alias
 
     # repos info
-    S_REPOS_CONTROL = 7  # user pick user's control
-    S_CHOOSE_REPOS = 8  # choose usr from db
-    S_LOOK_REPOS_ALI = 9  # look alias from history
-    S_ADD_REPOS = 10  # add new usr
-    S_ALI_REPOS_ENTER = 11  # add user alias
-    S_ALI_REPOS_ADDED = 12  # added user alias
+    S_REPOS_CONTROL = 11  # user pick repo's control
+    S_CHOOSE_REPOS = 12  # choose repos from db
+    S_LOOK_REPOS_ALI = 13  # look alias from history
+    S_ADD_REPOS = 14  # add new repos
+    S_LOOK_USER_REPOS = 15  # look user's repos
+    S_ALI_REPOS_ENTER = 16  # add repos alias
+    S_ALI_REPOS_ADDED = 17  # added repos alias
 
     # pr info
-    S_PR_CONTROL = 13  # user pick user's control
-    S_CHOOSE_PR = 14  # choose usr from db
-    S_LOOK_PR_ALI = 15  # look alias from history
-    S_ADD_PR = 16  # add new usr
-    S_ALI_PR_ENTER = 17  # add user alias
-    S_ALI_PR_ADDED = 18  # added user alias
+    S_PR_CONTROL = 21  # user pick user's control
+    S_CHOOSE_PR = 22  # choose usr from db
+    S_LOOK_PR_ALI = 23  # look alias from history
+    S_ADD_PR = 24  # add new usr
+    S_ALI_PR_ENTER = 25  # add user alias
+    S_ALI_PR_ADDED = 26  # added user alias
 
 
 def aliases_kb_for_user(db_object, user_id):
@@ -69,6 +70,17 @@ def aliases_kb_for_pr(db_object, user_id):
         alias = result[i][0]
         mark.row(types.InlineKeyboardButton(alias,
                                             callback_data=alias + " " + User.pr_alias_cal))
+    mark.row(types.InlineKeyboardButton(User.back_inf,
+                                        callback_data=" " + User.back_cal))
+    return mark
+
+
+def gh_repos_list(data, user_id):
+    mark = types.InlineKeyboardMarkup()
+    for i in range(data):
+        name = data[i]['name']
+        mark.row(types.InlineKeyboardButton(name,
+                                            callback_data=data[i]['full_name'] + " " + User.pr_gh_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark
@@ -120,10 +132,13 @@ class User:
     repos_alias_cal = "repos_alias_cal"
     pr_alias_cal = "pr_alias_cal"
 
+    pr_gh_cal = "pr_gh_cal"
+
     ans = "Выберите что вы хотите сделать"
     user_history_aliases_ans = "Выберите сохранённого пользователя чтобы получить информацию"
     repos_history_aliases_ans = "Выберите сохранённый репозиторий чтобы получить информацию"
     pr_history_aliases_ans = "Выберите сохранённый pull request чтобы получить информацию"
+    repos_github_list = "Выберите репозиторий"
     choose = "Выбрать из истории"
     user_new = "Добавить нового"
     repos_new = "Добавить новый"
