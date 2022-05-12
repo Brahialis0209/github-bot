@@ -616,7 +616,7 @@ def query_handler(call):
     user_id = call.message.chat.id
     db_object.execute(
         f"SELECT tg_user_id, gh_reposname "
-        f"FROM repos WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
+        f"FROM repos WHERE tg_user_id = '{user_id}' AND tg_alias_repos = '{alias}'")
     result = db_object.fetchone()
     name = result[1]
     query_url = f"https://api.github.com/repos/{name}/pulls"
