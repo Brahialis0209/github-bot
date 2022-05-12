@@ -26,8 +26,9 @@ class States:
     S_CHOOSE_PR = 22  # choose usr from db
     S_LOOK_PR_ALI = 23  # look alias from history
     S_ADD_PR = 24  # add new usr
-    S_ALI_PR_ENTER = 25  # add user alias
-    S_ALI_PR_ADDED = 26  # added user alias
+    S_LOOK_REPO_PRS = 25  # look user's repos
+    S_ALI_PR_ENTER = 26  # add user alias
+    S_ALI_PR_ADDED = 27  # added user alias
 
 
 def aliases_kb_for_user(db_object, user_id):
@@ -76,6 +77,15 @@ def aliases_kb_for_pr(db_object, user_id):
 
 
 def gh_repos_list(data):
+    mark = types.InlineKeyboardMarkup()
+    for repos in data:
+        mark.row(types.InlineKeyboardButton(repos['name'],
+                                            callback_data=repos['full_name'] + " " + User.pr_gh_cal))
+    mark.row(types.InlineKeyboardButton(User.back_inf,
+                                        callback_data=" " + User.back_cal))
+    return mark
+
+def gh_pr_list(data):
     mark = types.InlineKeyboardMarkup()
     for repos in data:
         mark.row(types.InlineKeyboardButton(repos['name'],
