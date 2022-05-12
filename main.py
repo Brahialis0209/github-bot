@@ -496,7 +496,7 @@ def query_handler(call):
 @bot.callback_query_handler(func=lambda call: (
         (
                 is_user_alias(call.data)
-                and get_user_state(call.message.chat.id) == States.S_ADD_REPOS
+                and get_user_state(call.message.chat.id) == States.S_ADD_REPOS  # repos control stream
                 and call.data.split(" ")[-1] != user_opts.User.back_cal)
         or (
                 get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ENTER
