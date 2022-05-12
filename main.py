@@ -424,7 +424,7 @@ def query_handler(call):
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                              text=User.user_history_aliases_ans,
+                              text=User.repos_history_aliases_ans,
                               reply_markup=user_opts.aliases_kb_for_repos(db_object, call.message.chat.id))
     update_user_state(call.message.chat.id, States.S_ADD_PR)
 
