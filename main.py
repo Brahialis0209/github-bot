@@ -683,20 +683,16 @@ def user_adding(message):
 
 
 def is_repos_from_gh(data):
-    print(data.split(' '))
-    print(User.pr_gh_cal in data.split(' '))
     return User.pr_gh_cal in data.split(' ')
 
 
 #  we entered repos gitname
-@bot.message_handler(func=lambda call: is_repos_from_gh(call.data))
+@bot.callback_query_handler(func=lambda call: is_repos_from_gh(call.data))
 def user_adding(call):
     query_url = f"https://api.github.com/repos/{call.data.split()[0]}"
     headers = {'Authorization': f'token {token}'}
-    print('hello1')
     r = requests.get(query_url, headers=headers)
     if r.status_code == 200:
-        print('hello2')
         dict_data = json.loads(r.text)
         name = dict_data['full_name'] if dict_data['full_name'] is not None else dict_data['id']
         db_object.execute(
@@ -711,7 +707,6 @@ def user_adding(call):
                                   "Введите другой.".format(alias),
                              reply_markup=ans.back_to_previous_kb())
         else:
-            print('hello3')
             dict_data = json.loads(r.text)
             gh_reposname = dict_data['full_name'] if dict_data['full_name'] is not None else dict_data['id']
             db_object.execute(
