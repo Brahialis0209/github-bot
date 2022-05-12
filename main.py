@@ -473,7 +473,7 @@ def is_user_alias(data):
 
 @bot.callback_query_handler(func=lambda call: (
         is_user_alias(call.data)
-        and (get_user_state(call.message.chat.id) == States.S_ADD_USER
+        and (get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
              or get_user_state(call.message.chat.id) == States.S_ALI_USER_ADDED)  # user control branch
         and call.data.split(" ")[-1] != user_opts.User.back_cal))
 def query_handler(call):
