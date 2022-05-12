@@ -494,9 +494,14 @@ def query_handler(call):
 
 
 @bot.callback_query_handler(func=lambda call: (
-        is_user_alias(call.data)
-        and get_user_state(call.message.chat.id) == States.S_ADD_REPOS  # repos control branch
-        and call.data.split(" ")[-1] != user_opts.User.back_cal))
+        (
+                is_user_alias(call.data)
+                and get_user_state(call.message.chat.id) == States.S_ADD_REPOS
+                and call.data.split(" ")[-1] != user_opts.User.back_cal)
+        or (
+                get_user_state(call.message.chat.id) == States.S_LOOK_USER_REPOS
+                and call.data.split(" ")[-1] == user_opts.User.back_cal))
+                            )
 def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
@@ -610,6 +615,7 @@ def query_handler(call):
                           text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
 
+
 #
 # # "back" when we entered gh repository
 # @bot.callback_query_handler(func=lambda call: (
@@ -625,8 +631,6 @@ def query_handler(call):
 #                           text="Введите владельца и имя репозитория через '/' \n"
 #                                "Пример: Brahialis0209/github-bot")
 #     update_user_state(call.message.chat.id, States.S_ADD_REPOS)
-
-
 
 # "back" when we entered gh pull request
 @bot.callback_query_handler(func=lambda call: (
