@@ -846,7 +846,7 @@ def pr_adding(call):
         name = dict_data['id']
         db_object.execute(
             f"SELECT tg_user_id, tg_alias_pr "
-            f"FROM pulls WHERE tg_user_id = '{call.message.from_user.id}' AND gh_prid = '{name}'")
+            f"FROM pulls WHERE tg_user_id = '{call.from_user.id}' AND gh_prid = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
             alias = result[0][1]
@@ -861,7 +861,7 @@ def pr_adding(call):
                 "INSERT INTO pulls(tg_user_id , gh_prid, gh_pr_url, gh_pr_title, "
                 "gh_pr_state, gh_commits, gh_changed_files) "
                 "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (call.message.from_user.id,
+                (call.from_user.id,
                  gh_prname,
                  dict_data['html_url'],
                  dict_data['title'],
@@ -869,7 +869,7 @@ def pr_adding(call):
                  dict_data['commits'],
                  dict_data['changed_files']))
             db_connection.commit()
-            update_user_state(call.message.from_user.id, States.S_ALI_PR_ENTER)
+            update_user_state(call.from_user.id, States.S_ALI_PR_ENTER)
             bot.send_message(chat_id=call.message.chat.id,
                              reply_markup=ans.back_to_previous_kb(repos_alias),
                              text="Введите alias для нового pull request.")
