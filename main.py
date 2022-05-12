@@ -503,6 +503,13 @@ def query_handler(call):
                 and call.data.split(" ")[-1] == user_opts.User.back_cal))
                             )
 def query_handler(call):
+
+    if call.data.split(" ")[-1] == user_opts.User.back_cal:
+        user_id = call.message.chat.id
+        db_object.execute(
+            f"DELETE FROM repos  WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
+        db_connection.commit()
+
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
     db_object.execute(
