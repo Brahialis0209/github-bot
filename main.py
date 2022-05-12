@@ -367,7 +367,13 @@ def is_repos_add(data):
     return User.repos_add in data.split(' ')
 
 
-@bot.callback_query_handler(func=lambda call: is_repos_add(call.data))
+@bot.callback_query_handler(func=lambda call: (
+        is_repos_add(call.data)
+        or (
+                get_user_state(call.message.chat.id) == States.S_LOOK_USER_REPOS
+                and call.data.split(" ")[-1] == user_opts.User.back_cal)
+        )
+)
 def query_handler(call):
     db_object.execute(
         f"SELECT tg_alias_user FROM gh_users WHERE tg_user_id = '{call.message.chat.id}'")
