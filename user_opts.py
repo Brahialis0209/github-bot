@@ -80,16 +80,20 @@ def gh_repos_list(data):
     mark = types.InlineKeyboardMarkup()
     for repos in data:
         mark.row(types.InlineKeyboardButton(repos['name'],
-                                            callback_data=repos['full_name'] + " " + User.pr_gh_cal))
+                                            callback_data=repos['full_name'] + " " + User.repos_gh_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark
 
+
 def gh_pr_list(data):
     mark = types.InlineKeyboardMarkup()
     for repos in data:
-        mark.row(types.InlineKeyboardButton(repos['name'],
-                                            callback_data=repos['full_name'] + " " + User.pr_gh_cal))
+        number = repos['gh_pr_url'].split('/')[:-1]
+        repo = '/'.join(repos['gh_pr_url'].split('/')[-4:-2])
+        title = f"#{number}: {repos['gh_pr_title']}"
+        mark.row(types.InlineKeyboardButton(title,
+                                            callback_data=f'{repo}/{number}' + " " + User.pr_gh_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark
@@ -141,6 +145,7 @@ class User:
     repos_alias_cal = "repos_alias_cal"
     pr_alias_cal = "pr_alias_cal"
 
+    repos_gh_cal = "repos_gh_cal"
     pr_gh_cal = "pr_gh_cal"
 
     ans = "Выберите что вы хотите сделать"
