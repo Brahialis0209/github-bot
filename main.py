@@ -696,7 +696,7 @@ def repos_adding(call):
         f"SELECT tg_user_id, tg_alias_user "
         f"FROM gh_users "
         f"WHERE tg_user_id = '{call.from_user.id}' AND login = '{user_login}'")
-    user_alias = db_object.fetchall()[1]
+    user_alias = db_object.fetchall()[0][1]
 
     query_url = f"https://api.github.com/repos/{call.data.split()[0]}"
     headers = {'Authorization': f'token {token}'}
