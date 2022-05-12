@@ -682,8 +682,12 @@ def user_adding(message):
                          reply_markup=ans.back_to_previous_kb())
 
 
+def is_repos_from_gh(data):
+    return User.pr_gh_cal in data.split(' ')
+
+
 #  we entered repos gitname
-@bot.message_handler(func=lambda message: get_user_state(message.from_user.id) == States.S_LOOK_USER_REPOS)
+@bot.message_handler(func=lambda message: is_repos_from_gh(message))
 def user_adding(message):
     query_url = f"https://api.github.com/repos/{message.split()[0]}"
     headers = {'Authorization': f'token {token}'}
