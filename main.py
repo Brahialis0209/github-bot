@@ -501,7 +501,7 @@ def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
     db_object.execute(
-        f"SELECT gh_username, gh_user_avatar, gh_user_url, login"
+        f"SELECT gh_username, gh_user_avatar, gh_user_url, login "
         f"FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
     result = db_object.fetchone()
     name = result[3]
