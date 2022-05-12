@@ -77,10 +77,9 @@ def aliases_kb_for_pr(db_object, user_id):
 
 def gh_repos_list(data, user_id):
     mark = types.InlineKeyboardMarkup()
-    for i in range(data):
-        name = data[i]['name']
-        mark.row(types.InlineKeyboardButton(name,
-                                            callback_data=data[i]['full_name'] + " " + User.pr_gh_cal))
+    for repos in data:
+        mark.row(types.InlineKeyboardButton(repos['name'],
+                                            callback_data=repos['full_name'] + " " + User.pr_gh_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark
