@@ -514,7 +514,7 @@ def query_handler(call):
         if len(dict_data) != 0:
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                   text=User.repos_github_list,
-                                  reply_markup=user_opts.gh_repos_list(dict_data, call.message.chat.id))
+                                  reply_markup=user_opts.gh_repos_list(dict_data))
         else:
             bot.send_message(chat_id=call.message.chat.id,
                              text="Список репозиториев выбранного пользователя пуст",
@@ -683,13 +683,13 @@ def user_adding(message):
 
 
 def is_repos_from_gh(data):
-    return User.pr_gh_cal in data.split(' ')
+    return User.pr_gh_cal in data.split()
 
 
 #  we entered repos gitname
-@bot.message_handler(func=lambda message: is_repos_from_gh(message))
-def user_adding(message):
-    query_url = f"https://api.github.com/repos/{message.split()[0]}"
+@bot.message_handler(func=lambda call: is_repos_from_gh(call.data))
+def user_adding(call):
+    query_url = f"https://api.github.com/repos/{call.data.split()[0]}"
     headers = {'Authorization': f'token {token}'}
     r = requests.get(query_url, headers=headers)
     if r.status_code == 200:
@@ -698,11 +698,11 @@ def user_adding(message):
         db_object.execute(
             f"SELECT tg_user_id, tg_alias_repos "
             f"FROM repos "
-            f"WHERE tg_user_id = '{message.from_user.id}' AND gh_reposname = '{name}'")
+            f"WHERE tg_user_id = '{call.from_user.id}' AND gh_reposname = '{name}'")
         result = db_object.fetchall()
         if len(result) != 0:
             alias = result[0][1]
-            bot.send_message(chat_id=message.chat.id,
+            bot.send_message(chat_id=call.chat.id,
                              text="Такой репозиторий уже существует в вашем сохранённом списке под псевдонимом: {}. "
                                   "Введите другой.".format(alias),
                              reply_markup=ans.back_to_previous_kb())
@@ -712,15 +712,15 @@ def user_adding(message):
             db_object.execute(
                 "INSERT INTO repos(tg_user_id , gh_reposname, gh_repos_url, gh_repos_description) "
                 "VALUES (%s, %s, %s, %s)",
-                (message.from_user.id, gh_reposname, dict_data['html_url'], dict_data['description']))
+                (call.from_user.id, gh_reposname, dict_data['html_url'], dict_data['description']))
             db_connection.commit()
-            update_user_state(message.from_user.id, States.S_ALI_REPOS_ENTER)
-            bot.send_message(chat_id=message.chat.id,
+            update_user_state(call.from_user.id, States.S_ALI_REPOS_ENTER)
+            bot.send_message(chat_id=call.chat.id,
                              reply_markup=ans.back_to_previous_kb(),
                              text="Введите alias для нового репозитория.")
 
     else:
-        bot.send_message(chat_id=message.chat.id,
+        bot.send_message(chat_id=call.chat.id,
                          text="Такой репозиторий найти не удалось, попробуйте ввести данные правильно.",
                          reply_markup=ans.back_to_previous_kb())
 
