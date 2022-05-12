@@ -499,7 +499,7 @@ def query_handler(call):
                 and get_user_state(call.message.chat.id) == States.S_ADD_REPOS
                 and call.data.split(" ")[-1] != user_opts.User.back_cal)
         or (
-                get_user_state(call.message.chat.id) == States.S_LOOK_USER_REPOS
+                get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ENTER
                 and call.data.split(" ")[-1] == user_opts.User.back_cal))
                             )
 def query_handler(call):
@@ -736,6 +736,9 @@ def repos_adding(call):
         bot.send_message(chat_id=call.message.chat.id,
                          text="Такой репозиторий найти не удалось, попробуйте ввести данные правильно.",
                          reply_markup=ans.back_to_previous_kb(user_alias))
+
+    update_user_state(call.from_user.id, States.S_ALI_REPOS_ENTER)
+
 
 
 #  we entered pr gitname
