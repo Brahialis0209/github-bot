@@ -702,7 +702,7 @@ def user_adding(call):
         result = db_object.fetchall()
         if len(result) != 0:
             alias = result[0][1]
-            bot.send_message(chat_id=call.chat.id,
+            bot.send_message(chat_id=call.message.chat.id,
                              text="Такой репозиторий уже существует в вашем сохранённом списке под псевдонимом: {}. "
                                   "Введите другой.".format(alias),
                              reply_markup=ans.back_to_previous_kb())
@@ -715,12 +715,12 @@ def user_adding(call):
                 (call.from_user.id, gh_reposname, dict_data['html_url'], dict_data['description']))
             db_connection.commit()
             update_user_state(call.from_user.id, States.S_ALI_REPOS_ENTER)
-            bot.send_message(chat_id=call.chat.id,
+            bot.send_message(chat_id=call.message.chat.id,
                              reply_markup=ans.back_to_previous_kb(),
                              text="Введите alias для нового репозитория.")
 
     else:
-        bot.send_message(chat_id=call.chat.id,
+        bot.send_message(chat_id=call.message.chat.id,
                          text="Такой репозиторий найти не удалось, попробуйте ввести данные правильно.",
                          reply_markup=ans.back_to_previous_kb())
 
