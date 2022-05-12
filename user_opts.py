@@ -89,9 +89,9 @@ def gh_repos_list(data):
 def gh_pr_list(data):
     mark = types.InlineKeyboardMarkup()
     for repos in data:
-        number = repos['gh_pr_url'].split('/')[:-1]
-        repo = '/'.join(repos['gh_pr_url'].split('/')[-4:-2])
-        title = f"#{number}: {repos['gh_pr_title']}"
+        number = repos['number'].split('/')[:-1]
+        repo = '/'.join(repos['html_url'].split('/')[-4:-2])
+        title = f"#{number}: {repos['title']}"
         mark.row(types.InlineKeyboardButton(title,
                                             callback_data=f'{repo}/{number}' + " " + User.pr_gh_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
