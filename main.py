@@ -556,16 +556,19 @@ def query_handler(call):
         dict_data = json.loads(r.text)
 
         if len(dict_data) != 0:
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
                                   text=User.repos_github_list,
                                   reply_markup=user_opts.gh_repos_list(dict_data))
         else:
             bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
                                   text="Список репозиториев выбранного пользователя пуст",
                                   reply_markup=ans.back_to_previous_kb())
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
                               text="Что-то пошло не так",
                               reply_markup=ans.back_to_previous_kb())
 
@@ -631,16 +634,19 @@ def query_handler(call):
         dict_data = json.loads(r.text)
 
         if len(dict_data) != 0:
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
                                   text=User.pr_github_list,
                                   reply_markup=user_opts.gh_pr_list(dict_data))
         else:
             bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
                                   text="Список pull request выбранного репозитория пуст",
                                   reply_markup=ans.back_to_previous_kb())
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
                               text="Что-то пошло не так",
                               reply_markup=ans.back_to_previous_kb())
 
@@ -697,7 +703,8 @@ def query_handler(call):
     db_object.execute(
         f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
     db_connection.commit()
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+    bot.edit_message_text(chat_id=call.message.chat.id,
+                          message_id=call.message.message_id,
                           reply_markup=ans.back_to_previous_kb(),
                           text="Введите имя пользователя:")
     update_user_state(call.message.chat.id, States.S_ADD_USER)
@@ -803,7 +810,9 @@ def repos_adding(call):
         if len(result) != 0:
             alias = result[0][1]
             bot.edit_message_text(chat_id=call.message.chat.id,
-                                  text="Такой репозиторий уже существует в вашем сохранённом списке под псевдонимом: {}. "
+                                  message_id=call.message.message_id,
+                                  text="Такой репозиторий уже существует в вашем сохранённом списке "
+                                       "под псевдонимом: {}. "
                                        "Введите другой.".format(alias),
                                   reply_markup=ans.back_to_previous_kb(user_alias))
         else:
@@ -816,11 +825,13 @@ def repos_adding(call):
             db_connection.commit()
             update_user_state(call.from_user.id, States.S_ALI_REPOS_ENTER)
             bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
                                   reply_markup=ans.back_to_previous_kb(user_alias),
                                   text="Введите alias для нового репозитория.")
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
                               text="Такой репозиторий найти не удалось, попробуйте ввести данные правильно.",
                               reply_markup=ans.back_to_previous_kb(user_alias))
 
@@ -857,7 +868,9 @@ def pr_adding(call):
         if len(result) != 0:
             alias = result[0][1]
             bot.edit_message_text(chat_id=call.message.chat.id,
-                                  text="Такой pull request уже существует в вашем сохранённом списке под псевдонимом: {}. "
+                                  message_id=call.message.message_id,
+                                  text="Такой pull request уже существует в вашем сохранённом списке "
+                                       "под псевдонимом: {}. "
                                        "Выберите другой.".format(alias),
                                   reply_markup=ans.back_to_previous_kb(repos_alias))
         else:
@@ -877,11 +890,13 @@ def pr_adding(call):
             db_connection.commit()
             update_user_state(call.from_user.id, States.S_ALI_PR_ENTER)
             bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
                                   reply_markup=ans.back_to_previous_kb(repos_alias),
                                   text="Введите alias для нового pull request.")
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
                               text="Такой pull request найти не удалось, попробуйте ввести данные правильно.",
                               reply_markup=ans.back_to_previous_kb(repos_alias))
 
