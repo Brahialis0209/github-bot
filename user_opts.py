@@ -153,6 +153,7 @@ class User:
     repos_history_aliases_ans = "Выберите сохранённый репозиторий чтобы получить информацию"
     pr_history_aliases_ans = "Выберите сохранённый pull request чтобы получить информацию"
     repos_github_list = "Выберите репозиторий"
+    pr_github_list = "Выберите pull request"
     choose = "Выбрать из истории"
     user_new = "Добавить нового"
     repos_new = "Добавить новый"
