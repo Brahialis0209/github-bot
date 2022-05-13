@@ -992,7 +992,7 @@ def query_handler(call):
                                   state,
                                   comments_num,
                                   changed_files),
-                          reply_markup=ans.back_to_menu_and_back_kb())
+                          reply_markup=ans.back_to_menu_kb())
 
 
 # ---------------------------------------------------------------------------------------------
