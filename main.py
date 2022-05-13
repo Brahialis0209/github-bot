@@ -1001,7 +1001,7 @@ def query_handler(call):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = ' '.join(message.text.split())
-    db_object.execute(f"SELECT gh_username FROM gh_users WHERE tg_alias_user = '{alias}'")
+    db_object.execute(f"SELECT gh_username FROM gh_users WHERE tg_alias_user = '{alias}' AND tg_user_id = '{user_id}'")
     result = db_object.fetchone()
     if not result:
         db_object.execute(
@@ -1020,7 +1020,7 @@ def alias_adding(message):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = ' '.join(message.text.split())
-    db_object.execute(f"SELECT gh_reposname FROM repos WHERE tg_alias_repos = '{alias}'")
+    db_object.execute(f"SELECT gh_reposname FROM repos WHERE tg_alias_repos = '{alias}' AND tg_user_id = '{user_id}'")
     result = db_object.fetchone()
     if not result:
         db_object.execute(
@@ -1030,7 +1030,14 @@ def alias_adding(message):
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.repos_ali_added_kb(alias),
                          text="Репозиторий {} добавлен.".format(alias))
     else:
-        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
+        login = result[0].split('/')[0]
+
+        db_object.execute(f"SELECT tg_alias_user "
+                          f"FROM gh_users "
+                          f"WHERE login = '{login}' AND tg_user_id = '{user_id}'")
+        result = db_object.fetchone()
+
+        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(result[0]),
                          text="Такой alias уже есть. Введите уникальный.")
 
 
@@ -1039,7 +1046,9 @@ def alias_adding(message):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = ' '.join(message.text.split())
-    db_object.execute(f"SELECT gh_prid FROM pulls WHERE tg_alias_pr = '{alias}'")
+    db_object.execute(f"SELECT gh_prid, gh_pr_url "
+                      f"FROM pulls "
+                      f"WHERE tg_alias_pr = '{alias}' AND tg_user_id = '{user_id}'")
     result = db_object.fetchone()
     if not result:
         db_object.execute(
@@ -1049,7 +1058,14 @@ def alias_adding(message):
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.pr_ali_added_kb(alias),
                          text="Pull request {} добавлен.".format(alias))
     else:
-        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
+        repo = '/'.join(result[1].split('/')[-4:-2])
+
+        db_object.execute(f"SELECT tg_alias_repos "
+                          f"FROM repos "
+                          f"WHERE gh_reposname = '{repo}' AND tg_user_id = '{user_id}'")
+        result = db_object.fetchone()
+
+        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(result[0]),
                          text="Такой alias уже есть. Введите уникальный.")
 
 
