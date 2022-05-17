@@ -774,7 +774,7 @@ def user_adding(message):
             update_user_state(message.from_user.id, States.S_ALI_USER_ENTER)
             bot.send_message(chat_id=message.chat.id,
                              reply_markup=ans.back_to_previous_kb(),
-                             text="Введите alias для нового пользователя.")
+                             text=f"Введите alias для нового пользователя {dict_data['login']}.")
 
     else:
         bot.send_message(chat_id=message.chat.id,
@@ -827,7 +827,7 @@ def repos_adding(call):
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
                                   reply_markup=ans.back_to_previous_kb(user_alias),
-                                  text="Введите alias для нового репозитория.")
+                                  text=f"Введите alias для нового репозитория {gh_reposname}.")
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id,
@@ -892,7 +892,7 @@ def pr_adding(call):
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
                                   reply_markup=ans.back_to_previous_kb(repos_alias),
-                                  text="Введите alias для нового pull request.")
+                                  text=f"Введите alias для нового pull request {call.data.split()[0]}.")
 
     else:
         bot.edit_message_text(chat_id=call.message.chat.id,
