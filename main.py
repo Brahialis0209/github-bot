@@ -26,7 +26,12 @@ token = os.environ.get("GITHUB_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
 server = Flask(__name__)
 
-db_engine = create_engine(DB_URI, echo=True, future=True)
+# hack to transform default postgres DB_URI into SqlAlchemy-suitable
+db_uri_fixed = DB_URI
+if db_uri_fixed.startswith("postgres://"):
+    db_uri_fixed = db_uri_fixed.replace("postgres://", "postgresql://", 1)
+
+db_engine = create_engine(db_uri_fixed, echo=True, future=True)
 Base.metadata.create_all(db_engine)
 
 
