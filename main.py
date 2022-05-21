@@ -41,7 +41,7 @@ def update_user_state(user_id, state):
 
 
 def update_user_state_with_session(user_id, state, session: Session):
-    tg_user = session.execute(select([TgUser]).where(TgUser.tg_user_id == user_id)).one()
+    tg_user = session.execute(select([TgUser]).where(TgUser.tg_user_id == user_id)).first()
     if tg_user is not None:
         tg_user.user_state = state
     session.commit()
@@ -55,7 +55,7 @@ def get_user_state(user_id):
 
 
 def get_user_state_with_session(user_id, session: Session):
-    tg_user = session.execute(select([TgUser]).where(TgUser.tg_user_id == int(user_id))).one()
+    tg_user = session.execute(select([TgUser]).where(TgUser.tg_user_id == int(user_id))).first()
     return -1 if tg_user is None else tg_user.user_state
 
 
@@ -107,7 +107,7 @@ def start_message(message):
     username = message.from_user.username
     # Find out if there's a new user or he/she has been already registered
     session = Session(db_engine)
-    current_user = session.execute(select([TgUser]).where(TgUser.tg_user_id == int(user_id))).one()
+    current_user = session.execute(select([TgUser]).where(TgUser.tg_user_id == int(user_id))).first()
     if current_user is None:
         # User is not in the database -> add user to the database and set initial state
         current_user = TgUser(tg_user_id=user_id, tg_username=username, user_state=States.S_START)
@@ -582,7 +582,7 @@ def query_handler(call):
     session = Session(db_engine)
     github_user = session.execute(
         select([GitHubUsers]).where(GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias)
-    ).one()
+    ).first()
 
     name = github_user.gh_username
     url = github_user.hg_user_url
@@ -614,7 +614,7 @@ def query_handler(call):
     user_id = call.message.chat.id
     github_user = session.execute(
         select([GitHubUsers]).where(GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias)
-    ).one()
+    ).first()
 
     name = github_user.login
     query_url = f"https://api.github.com/users/{name}/repos"
@@ -661,7 +661,7 @@ def query_handler(call):
 
     github_repos = session.execute(
         select([GitHubRepos]).where(GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias)
-    ).one()
+    ).first()
 
     name = github_repos.gh_reposname
     url = github_repos.gh_repos_url
@@ -696,7 +696,7 @@ def query_handler(call):
 
     github_repos = session.execute(
         select([GitHubRepos]).where(GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias)
-    ).one()
+    ).first()
 
     name = github_repos.gh_reposname
     query_url = f"https://api.github.com/repos/{name}/pulls"
@@ -742,7 +742,7 @@ def query_handler(call):
         select([GitHubPullRequest]).where(
             GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == alias
         )
-    ).one()
+    ).first()
     url = pull_request.gh_pr_url
     title = pull_request.gh_pr_title
     state = pull_request.gh_pr_state
@@ -803,7 +803,7 @@ def user_adding(message):
             select([GitHubUsers]).where(
                 GitHubUsers.tg_user_id == message.from_user.id and GitHubUsers.gh_username == name
             )
-        ).one()
+        ).first()
         if github_user is not None:
             # Such user has already been added to the database
             bot.send_message(chat_id=message.chat.id,
@@ -846,7 +846,7 @@ def repos_adding(call):
         select([GitHubUsers]).where(
             GitHubUsers.tg_user_id == call.from_user.id and GitHubUsers.login == user_login
         )
-    ).one()
+    ).first()
     user_alias = github_user.tg_alias_user
 
     query_url = f"https://api.github.com/repos/{call.data.split()[0]}"
@@ -859,7 +859,7 @@ def repos_adding(call):
             select([GitHubRepos]).where(
                 GitHubRepos.tg_user_id == call.from_user.id and GitHubRepos.gh_reposname == name
             )
-        ).one()
+        ).first()
 
         if github_repos is not None:
             alias = github_repos.tg_alias_repos
@@ -911,7 +911,7 @@ def pr_adding(call):
         select([GitHubRepos]).where(
             GitHubRepos.tg_user_id == call.from_user.id and GitHubRepos.gh_reposname == repos_fullname
         )
-    ).one()
+    ).first()
     repos_alias = github_repos.tg_alias_repos
 
     query_url = f"https://api.github.com/repos/{tokens[0]}/{tokens[1]}/pulls/{tokens[2]}"
@@ -925,7 +925,7 @@ def pr_adding(call):
             select([GitHubPullRequest]).where(
                 GitHubPullRequest.tg_user_id == call.from_user.id and GitHubPullRequest.gh_prid == name
             )
-        ).one()
+        ).first()
 
         if pull_request is not None:
             alias = pull_request.tg_alias_pr
@@ -1009,7 +1009,7 @@ def query_handler(call):
     session = Session(db_engine)
     github_user = session.execute(
         select([GitHubUsers]).where(GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias)
-    ).one()
+    ).first()
 
     name = github_user.gh_username
     url = github_user.gh_user_url
@@ -1036,7 +1036,7 @@ def query_handler(call):
         select([GitHubRepos]).where(
             GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias
         )
-    ).one()
+    ).first()
 
     name = github_repos.gh_reposname
     url = github_repos.gh_repos_url
@@ -1065,7 +1065,7 @@ def query_handler(call):
         select([GitHubPullRequest]).where(
             GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == alias
         )
-    ).one()
+    ).first()
 
     url = pull_request.gh_pr_url
     title = pull_request.gh_pr_title
@@ -1104,7 +1104,7 @@ def alias_adding(message):
             select([GitHubUsers]).where(
                 GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == None  # noqa
             )
-        ).one()
+        ).first()
         github_user.tg_alias_user = alias
         session.commit()
         update_user_state_with_session(message.from_user.id, States.S_ALI_USER_ADDED, session)
@@ -1125,14 +1125,14 @@ def alias_adding(message):
     session = Session(db_engine)
     github_repos = session.execute(
         select([GitHubRepos]).where(GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias)
-    ).one()
+    ).first()
 
     if github_repos is None:
         github_repos = session.execute(
             select([GitHubRepos]).where(
                 GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == None  # noqa
             )
-        ).one()
+        ).first()
         github_repos.tg_alias_repos = alias
         session.commit()
         update_user_state_with_session(message.from_user.id, States.S_ALI_REPOS_ADDED, session)
@@ -1144,7 +1144,7 @@ def alias_adding(message):
             select([GitHubUsers.tg_alias_user]).where(
                 GitHubUsers.tg_user_id == user_id and GitHubUsers.login == login
             )
-        ).one()
+        ).first()
 
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(github_user_alias),
                          text="Такой alias уже есть. Введите уникальный.")
@@ -1162,7 +1162,7 @@ def alias_adding(message):
         select([GitHubPullRequest]).where(
             GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == alias
         )
-    ).one()
+    ).first()
 
     if pull_request is None:
         pull_request = session.execute(
@@ -1170,7 +1170,7 @@ def alias_adding(message):
                 GitHubPullRequest.tg_user_id == user_id
                 and GitHubPullRequest.tg_alias_pr == None  # noqa
             )
-        ).one()
+        ).first()
         pull_request.tg_alias_pr = alias
         session.commit()
         update_user_state_with_session(message.from_user.id, States.S_ALI_PR_ADDED, session)
@@ -1184,7 +1184,7 @@ def alias_adding(message):
             select([GitHubRepos.tg_alias_repos]).where(
                 GitHubRepos.tg_user_id == user_id and GitHubRepos.gh_reposname == repo
             )
-        ).one()
+        ).first()
 
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(repos_alias),
                          text="Такой alias уже есть. Введите уникальный.")
