@@ -31,7 +31,7 @@ db_uri_fixed = DB_URI
 if db_uri_fixed.startswith("postgres://"):
     db_uri_fixed = db_uri_fixed.replace("postgres://", "postgresql://", 1)
 
-db_engine = create_engine(db_uri_fixed, echo=True, future=True)
+db_engine = create_engine(db_uri_fixed, echo=True)
 Base.metadata.create_all(db_engine)
 
 
@@ -55,27 +55,27 @@ def get_user_state(user_id):
 
 
 def get_user_state_with_session(user_id, session: Session):
-    tg_user = session.get(TgUser, int(user_id))
+    tg_user = session.execute(select(TgUser).where(TgUser.tg_user_id == int(user_id))).one()
     return -1 if tg_user is None else tg_user.user_state
 
 
 def delete_null_alias_from_users(user_id, session: Session):
     # Use "==" instead of "is" in comparison with None to properly construct SQL query
-    session.execute(select(GitHubUsers).where(GitHubUsers.tg_alias_user == None)).delete()
+    session.execute(select(GitHubUsers).where(GitHubUsers.tg_alias_user == None)).delete()  # noqa
     session.commit()
     session.flush()
 
 
 def delete_null_alias_from_repos(user_id, session: Session):
     # Use "==" instead of "is" in comparison with None to properly construct SQL query
-    session.execute(select(GitHubRepos).where(GitHubRepos.tg_alias_repos == None)).delete()
+    session.execute(select(GitHubRepos).where(GitHubRepos.tg_alias_repos == None)).delete()  # noqa
     session.commit()
     session.flush()
 
 
 def delete_null_alias_from_pull_requests(user_id, session: Session):
     # Use "==" instead of "is" in comparison with None to properly construct SQL query
-    session.execute(select(GitHubPullRequest).where(GitHubPullRequest.tg_alias_pr == None)).delete()
+    session.execute(select(GitHubPullRequest).where(GitHubPullRequest.tg_alias_pr == None)).delete()  # noqa
     session.commit()
     session.flush()
 
@@ -92,7 +92,7 @@ def start_message(message):
     username = message.from_user.username
     # Find out if there's a new user or he/she has been already registered
     session = Session(db_engine)
-    current_user = session.get(TgUser, int(user_id))
+    current_user = session.execute(select(TgUser).where(TgUser.tg_user_id == int(user_id))).one()
     if current_user is None:
         # User is not in the database -> add user to the database and set initial state
         current_user = TgUser(tg_user_id=user_id, tg_username=username, user_state=States.S_START)
@@ -1086,7 +1086,9 @@ def alias_adding(message):
     )
     if github_user is None:
         github_user = session.execute(
-            select(GitHubUsers).where(GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == None)
+            select(GitHubUsers).where(
+                GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == None  # noqa
+            )
         ).one()
         github_user.tg_alias_user = alias
         session.commit()
@@ -1113,7 +1115,7 @@ def alias_adding(message):
     if github_repos is None:
         github_repos = session.execute(
             select(GitHubRepos).where(
-                GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == None
+                GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == None  # noqa
             )
         ).one()
         github_repos.tg_alias_repos = alias
@@ -1150,7 +1152,8 @@ def alias_adding(message):
     if pull_request is None:
         pull_request = session.execute(
             select(GitHubPullRequest).where(
-                GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == None
+                GitHubPullRequest.tg_user_id == user_id
+                and GitHubPullRequest.tg_alias_pr == None  # noqa
             )
         ).one()
         pull_request.tg_alias_pr = alias
