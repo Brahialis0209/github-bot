@@ -4,12 +4,16 @@ import user_opts
 from ans import Answers
 from user_opts import User, States
 import logging
-import psycopg2
 from flask import Flask, request
 import os
 import requests
 import json
 from telebot import types
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
+
+from data_models import Base, TgUser, GitHubUsers, GitHubRepos, GitHubPullRequest
+
 
 logger = telebot.logger
 logger.setLevel(logging.DEBUG)
@@ -22,125 +26,156 @@ token = os.environ.get("GITHUB_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
 server = Flask(__name__)
 
-db_connection = psycopg2.connect(DB_URI, sslmode="require")
-db_object = db_connection.cursor()
+db_engine = create_engine(DB_URI, echo=True, future=True)
+Base.metadata.create_all(db_engine)
 
 
 def update_user_state(user_id, state):
-    db_object.execute(f"UPDATE tg_users SET user_state = {state} WHERE tg_user_id = {user_id}")
-    db_connection.commit()
+    session = Session(db_engine)
+    update_user_state_with_session(user_id, state, session)
+
+
+def update_user_state_with_session(user_id, state, session: Session):
+    tg_user = session.execute(select(TgUser).where(TgUser.tg_user_id == user_id)).one()
+    if tg_user is not None:
+        tg_user.user_state = state
+    session.commit()
+    session.flush()
 
 
 def get_user_state(user_id):
-    db_object.execute(f"SELECT user_state FROM tg_users WHERE tg_user_id = '{user_id}'")
-    result = db_object.fetchone()
-    if not result:
-        return -1
-    return result[0]  # (state,)
+    session = Session(db_engine)
+    get_user_state_with_session(user_id, session)
+    finish_session(session)
+
+
+def get_user_state_with_session(user_id, session: Session):
+    tg_user = session.get(TgUser, int(user_id))
+    return -1 if tg_user is None else tg_user.user_state
+
+
+def delete_null_alias_from_users(user_id, session: Session):
+    # Use "==" instead of "is" in comparison with None to properly construct SQL query
+    session.execute(select(GitHubUsers).where(GitHubUsers.tg_alias_user == None)).delete()
+    session.commit()
+    session.flush()
+
+
+def delete_null_alias_from_repos(user_id, session: Session):
+    # Use "==" instead of "is" in comparison with None to properly construct SQL query
+    session.execute(select(GitHubRepos).where(GitHubRepos.tg_alias_repos == None)).delete()
+    session.commit()
+    session.flush()
+
+
+def delete_null_alias_from_pull_requests(user_id, session: Session):
+    # Use "==" instead of "is" in comparison with None to properly construct SQL query
+    session.execute(select(GitHubPullRequest).where(GitHubPullRequest.tg_alias_pr == None)).delete()
+    session.commit()
+    session.flush()
+
+
+def finish_session(session: Session):
+    session.commit()
+    session.flush()
+    session.close()
 
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
     user_id = message.from_user.id
     username = message.from_user.username
-    db_object.execute(f"SELECT tg_user_id FROM tg_users WHERE tg_user_id = {user_id}")
-    result = db_object.fetchone()
-    if not result:
-        db_object.execute("INSERT INTO tg_users(tg_user_id, tg_username, user_state) VALUES (%s, %s, %s)",
-                          (user_id, username, States.S_START))
-        db_connection.commit()
+    # Find out if there's a new user or he/she has been already registered
+    session = Session(db_engine)
+    current_user = session.get(TgUser, int(user_id))
+    if current_user is None:
+        # User is not in the database -> add user to the database and set initial state
+        current_user = TgUser(tg_user_id=user_id, tg_username=username, user_state=States.S_START)
+        session.add(current_user)
+        session.commit()
+        # Greet
         bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
     else:
-        usr_status = get_user_state(user_id)
+        # User has already been registered in the database so we act up to status of the user
+        usr_status = get_user_state_with_session(user_id, session)
         if usr_status == States.S_START:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
 
         # user options
         elif usr_status == States.S_USER_CONTROL:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         elif usr_status == States.S_CHOOSE_USER:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
 
         elif usr_status == States.S_ADD_USER:
             #  we enter start or any text and losed username or alias,
             #  therefore need to remove row in gh_userd with alias == null
-            db_object.execute(
-                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
-            db_connection.commit()
+            delete_null_alias_from_users(user_id, session)
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         elif usr_status == States.S_ALI_USER_ENTER:
             #  we enter start or any text and losed username or alias,
             #  therefore need to remove row in gh_userd with alias == null
-            db_object.execute(
-                f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
-            db_connection.commit()
+            delete_null_alias_from_users(user_id, session)
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         elif usr_status == States.S_ALI_USER_ADDED:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
 
         # repos options
         elif usr_status == States.S_REPOS_CONTROL:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         elif usr_status == States.S_CHOOSE_REPOS:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
 
         elif usr_status == States.S_ADD_REPOS:
             #  we enter start or any text and losed repository name or alias,
             #  therefore need to remove row in gh_userd with alias == null
-            db_object.execute(
-                f"DELETE FROM repos  WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
-            db_connection.commit()
+            delete_null_alias_from_repos(user_id, session)
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         elif usr_status == States.S_ALI_REPOS_ENTER:
             #  we enter start or any text and losed repository name or alias,
             #  therefore need to remove row in gh_userd with alias == null
-            db_object.execute(
-                f"DELETE FROM repos  WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
-            db_connection.commit()
+            delete_null_alias_from_repos(user_id, session)
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         elif usr_status == States.S_ALI_REPOS_ADDED:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
 
         # pr options
         elif usr_status == States.S_PR_CONTROL:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         elif usr_status == States.S_CHOOSE_PR:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
 
         elif usr_status == States.S_ADD_PR:
             #  we enter start or any text and losed repository name or alias,
             #  therefore need to remove row in gh_userd with alias == null
-            db_object.execute(
-                f"DELETE FROM pulls  WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
-            db_connection.commit()
+            delete_null_alias_from_pull_requests(user_id, session)
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         elif usr_status == States.S_ALI_PR_ENTER:
             #  we enter start or any text and losed repository name or alias,
             #  therefore need to remove row in gh_userd with alias == null
-            db_object.execute(
-                f"DELETE FROM pulls  WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
-            db_connection.commit()
+            delete_null_alias_from_pull_requests(user_id, session)
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         elif usr_status == States.S_ALI_PR_ADDED:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
         else:
             bot.send_message(message.chat.id, Answers.start_ans, reply_markup=ans.start_kb_for_all())
-            update_user_state(message.chat.id, States.S_START)
+            update_user_state_with_session(message.chat.id, States.S_START, session)
+    finish_session(session)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -250,11 +285,11 @@ def is_user_choose(data):
 
 @bot.callback_query_handler(func=lambda call: is_user_choose(call.data))
 def query_handler(call):
-    db_object.execute(
-        f"SELECT tg_alias_user FROM gh_users WHERE tg_user_id = '{call.message.chat.id}'")
-    result = db_object.fetchall()
-    len_hist = len(result)
-    if len_hist == 0:
+    session = Session(db_engine)
+    github_user_aliases = session.execute(
+        select(GitHubUsers.tg_alias_user).where(GitHubUsers.tg_user_id == call.message.chat.id)
+    ).all()
+    if github_user_aliases is None or len(github_user_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
         mark.row(types.InlineKeyboardButton(User.back_inf,
                                             callback_data=" " + User.back_cal))
@@ -265,8 +300,9 @@ def query_handler(call):
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text=User.user_history_aliases_ans,
-                              reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
-    update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
+                              reply_markup=user_opts.aliases_kb_for_user(call.message.chat.id, session))
+    update_user_state_with_session(call.message.chat.id, States.S_CHOOSE_USER, session)
+    finish_session(session)
 
 
 #  we pick check history of repos aliases
@@ -276,11 +312,11 @@ def is_repos_choose(data):
 
 @bot.callback_query_handler(func=lambda call: is_repos_choose(call.data))
 def query_handler(call):
-    db_object.execute(
-        f"SELECT tg_alias_repos FROM repos WHERE tg_user_id = '{call.message.chat.id}'")
-    result = db_object.fetchall()
-    len_hist = len(result)
-    if len_hist == 0:
+    session = Session(db_engine)
+    repos_aliases = session.execute(
+        select(GitHubRepos.tg_alias_repos).where(GitHubRepos.tg_user_id == call.message.chat.id)
+    ).all()
+    if repos_aliases is None or len(repos_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
         mark.row(types.InlineKeyboardButton(User.back_inf,
                                             callback_data=" " + User.back_cal))
@@ -291,8 +327,9 @@ def query_handler(call):
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text=User.repos_history_aliases_ans,
-                              reply_markup=user_opts.aliases_kb_for_repos(db_object, call.message.chat.id))
-    update_user_state(call.message.chat.id, States.S_CHOOSE_REPOS)
+                              reply_markup=user_opts.aliases_kb_for_repos(call.message.chat.id, session))
+    update_user_state_with_session(call.message.chat.id, States.S_CHOOSE_REPOS, session)
+    finish_session(session)
 
 
 #  we pick check history of repos aliases
@@ -302,11 +339,11 @@ def is_pr_choose(data):
 
 @bot.callback_query_handler(func=lambda call: is_pr_choose(call.data))
 def query_handler(call):
-    db_object.execute(
-        f"SELECT tg_alias_pr FROM pulls WHERE tg_user_id = '{call.message.chat.id}'")
-    result = db_object.fetchall()
-    len_hist = len(result)
-    if len_hist == 0:
+    session = Session(db_engine)
+    pr_aliases = session.execute(
+        select(GitHubPullRequest.tg_alias_pr).where(GitHubPullRequest.tg_user_id == call.message.chat.id)
+    ).all()
+    if pr_aliases is None or len(pr_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
         mark.row(types.InlineKeyboardButton(User.back_inf,
                                             callback_data=" " + User.back_cal))
@@ -317,8 +354,9 @@ def query_handler(call):
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text=User.pr_history_aliases_ans,
-                              reply_markup=user_opts.aliases_kb_for_pr(db_object, call.message.chat.id))
-    update_user_state(call.message.chat.id, States.S_CHOOSE_PR)
+                              reply_markup=user_opts.aliases_kb_for_pr(call.message.chat.id, session))
+    update_user_state_with_session(call.message.chat.id, States.S_CHOOSE_PR, session)
+    finish_session(session)
 
 
 # -------------------------------
@@ -378,11 +416,11 @@ def is_repos_add(data):
 )
                             )
 def query_handler(call):
-    db_object.execute(
-        f"SELECT tg_alias_user FROM gh_users WHERE tg_user_id = '{call.message.chat.id}'")
-    result = db_object.fetchall()
-    len_hist = len(result)
-    if len_hist == 0:
+    session = Session(db_engine)
+    github_user_aliases = session.execute(
+        select(GitHubUsers.tg_alias_user).where(GitHubUsers.tg_user_id == call.message.chat.id)
+    ).all()
+    if github_user_aliases is None or len(github_user_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
         mark.row(types.InlineKeyboardButton(User.back_inf,
                                             callback_data=" " + User.back_cal))
@@ -394,8 +432,9 @@ def query_handler(call):
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text=User.user_history_aliases_ans,
-                              reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
-    update_user_state(call.message.chat.id, States.S_ADD_REPOS)
+                              reply_markup=user_opts.aliases_kb_for_user(call.message.chat.id, session))
+    update_user_state_with_session(call.message.chat.id, States.S_ADD_REPOS, session)
+    finish_session(session)
 
 
 #  we pick add pr
@@ -410,11 +449,11 @@ def is_pr_add(data):
                 and call.data.split(" ")[-1] == user_opts.User.back_cal)
 ))
 def query_handler(call):
-    db_object.execute(
-        f"SELECT tg_alias_repos FROM repos WHERE tg_user_id = '{call.message.chat.id}'")
-    result = db_object.fetchall()
-    len_hist = len(result)
-    if len_hist == 0:
+    session = Session(db_engine)
+    repos_aliases = session.execute(
+        select(GitHubRepos.tg_alias_repos).where(GitHubRepos.tg_user_id == call.message.chat.id)
+    ).all()
+    if repos_aliases is None or len(repos_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
         mark.row(types.InlineKeyboardButton(User.back_inf,
                                             callback_data=" " + User.back_cal))
@@ -426,8 +465,9 @@ def query_handler(call):
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text=User.repos_history_aliases_ans,
-                              reply_markup=user_opts.aliases_kb_for_repos(db_object, call.message.chat.id))
-    update_user_state(call.message.chat.id, States.S_ADD_PR)
+                              reply_markup=user_opts.aliases_kb_for_repos(call.message.chat.id, session))
+    update_user_state_with_session(call.message.chat.id, States.S_ADD_PR, session)
+    finish_session(session)
 
 
 # -------------------------------
@@ -436,11 +476,13 @@ def query_handler(call):
         get_user_state(call.message.chat.id) == States.S_LOOK_USER_ALI and
         call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
-    update_user_state(call.message.chat.id, States.S_CHOOSE_USER)
+    session = Session(db_engine)
+    update_user_state_with_session(call.message.chat.id, States.S_CHOOSE_USER, session)
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text=User.user_history_aliases_ans,
-                          reply_markup=user_opts.aliases_kb_for_user(db_object, call.message.chat.id))
+                          reply_markup=user_opts.aliases_kb_for_user(call.message.chat.id, session))
+    finish_session(session)
 
 
 # "back" when we looked alias from repos history
@@ -448,11 +490,13 @@ def query_handler(call):
         get_user_state(call.message.chat.id) == States.S_LOOK_REPOS_ALI and
         call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
-    update_user_state(call.message.chat.id, States.S_CHOOSE_REPOS)
+    session = Session(db_engine)
+    update_user_state_with_session(call.message.chat.id, States.S_CHOOSE_REPOS, session)
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text=User.repos_history_aliases_ans,
-                          reply_markup=user_opts.aliases_kb_for_repos(db_object, call.message.chat.id))
+                          reply_markup=user_opts.aliases_kb_for_repos(call.message.chat.id, session))
+    finish_session(session)
 
 
 # "back" when we looked alias from pr history
@@ -460,11 +504,13 @@ def query_handler(call):
         get_user_state(call.message.chat.id) == States.S_LOOK_PR_ALI and
         call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
-    update_user_state(call.message.chat.id, States.S_CHOOSE_PR)
+    session = Session(db_engine)
+    update_user_state_with_session(call.message.chat.id, States.S_CHOOSE_PR, session)
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text=User.pr_history_aliases_ans,
-                          reply_markup=user_opts.aliases_kb_for_pr(db_object, call.message.chat.id))
+                          reply_markup=user_opts.aliases_kb_for_pr(call.message.chat.id, session))
+    finish_session(session)
 
 
 # ----------------------------------------------------------------------------------------------
@@ -512,18 +558,21 @@ def is_user_alias(data):
 def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
-    db_object.execute(
-        f"SELECT gh_username, gh_user_avatar, gh_user_url "
-        f"FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
-    result = db_object.fetchone()
-    name = result[0]
-    url = result[2]
+
+    session = Session(db_engine)
+    github_user = session.execute(
+        select(GitHubUsers).where(GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias)
+    ).one()
+
+    name = github_user.gh_username
+    url = github_user.hg_user_url
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Имя: {}\n"
                                "🔘 Ссылка на пользователя: {}.".format(name, url),
                           reply_markup=ans.back_to_menu_and_back_kb())
-    update_user_state(call.message.chat.id, States.S_LOOK_USER_ALI)
+    update_user_state_with_session(call.message.chat.id, States.S_LOOK_USER_ALI, session)
+    finish_session(session)
 
 
 @bot.callback_query_handler(func=lambda call: (
@@ -536,19 +585,18 @@ def query_handler(call):
                 and call.data.split(" ")[-1] == user_opts.User.back_cal))
                             )
 def query_handler(call):
+    session = Session(db_engine)
     if call.data.split(" ")[-1] == user_opts.User.back_cal:
         user_id = call.message.chat.id
-        db_object.execute(
-            f"DELETE FROM repos  WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
-        db_connection.commit()
+        delete_null_alias_from_repos(user_id, session)
 
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
-    db_object.execute(
-        f"SELECT gh_username, gh_user_avatar, gh_user_url, login "
-        f"FROM gh_users WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
-    result = db_object.fetchone()
-    name = result[3]
+    github_user = session.execute(
+        select(GitHubUsers).where(GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias)
+    ).one()
+
+    name = github_user.login
     query_url = f"https://api.github.com/users/{name}/repos"
     headers = {'Authorization': f'token {token}'}
     r = requests.get(query_url, headers=headers)
@@ -572,7 +620,8 @@ def query_handler(call):
                               text="Что-то пошло не так",
                               reply_markup=ans.back_to_previous_kb())
 
-    update_user_state(call.message.chat.id, States.S_LOOK_USER_REPOS)
+    update_user_state_with_session(call.message.chat.id, States.S_LOOK_USER_REPOS, session)
+    finish_session(session)
 
 
 #  we pick alias from our history list
@@ -588,20 +637,23 @@ def is_repos_alias(data):
 def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
-    db_object.execute(
-        f"SELECT gh_reposname, gh_repos_url, gh_repos_description "
-        f"FROM repos WHERE tg_user_id = '{user_id}' AND tg_alias_repos = '{alias}'")
-    result = db_object.fetchone()
-    name = result[0]
-    url = result[1]
-    description = result[2]
+    session = Session(db_engine)
+
+    github_repos = session.execute(
+        select(GitHubRepos).where(GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias)
+    ).one()
+
+    name = github_repos.gh_reposname
+    url = github_repos.gh_repos_url
+    description = github_repos.gh_repos_description
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Репозиторий: {}\n"
                                "🔘 Ссылка на репозиторий: {}\n"
                                "🔘 Описание: {}.".format(name, url, description),
                           reply_markup=ans.back_to_menu_and_back_kb())
-    update_user_state(call.message.chat.id, States.S_LOOK_REPOS_ALI)
+    update_user_state_with_session(call.message.chat.id, States.S_LOOK_REPOS_ALI, session)
+    finish_session(session)
 
 
 @bot.callback_query_handler(func=lambda call: (
@@ -614,19 +666,19 @@ def query_handler(call):
                 and call.data.split(" ")[-1] == user_opts.User.back_cal))
                             )
 def query_handler(call):
+    session = Session(db_engine)
     if call.data.split(" ")[-1] == user_opts.User.back_cal:
         user_id = call.message.chat.id
-        db_object.execute(
-            f"DELETE FROM pulls  WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
-        db_connection.commit()
+        delete_null_alias_from_pull_requests(user_id, session)
 
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
-    db_object.execute(
-        f"SELECT tg_user_id, gh_reposname "
-        f"FROM repos WHERE tg_user_id = '{user_id}' AND tg_alias_repos = '{alias}'")
-    result = db_object.fetchone()
-    name = result[1]
+
+    github_repos = session.execute(
+        select(GitHubRepos).where(GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias)
+    ).one()
+
+    name = github_repos.gh_reposname
     query_url = f"https://api.github.com/repos/{name}/pulls"
     headers = {'Authorization': f'token {token}'}
     r = requests.get(query_url, headers=headers)
@@ -650,7 +702,8 @@ def query_handler(call):
                               text="Что-то пошло не так",
                               reply_markup=ans.back_to_previous_kb())
 
-    update_user_state(call.message.chat.id, States.S_LOOK_REPO_PRS)
+    update_user_state_with_session(call.message.chat.id, States.S_LOOK_REPO_PRS, session)
+    finish_session(session)
 
 
 #  we pick alias from our history list
@@ -664,15 +717,17 @@ def is_pr_alias(data):
 def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
-    db_object.execute(
-        f"SELECT gh_prid, gh_pr_url, gh_pr_title, gh_pr_state, gh_commits, gh_changed_files "
-        f"FROM pulls WHERE tg_user_id = '{user_id}' AND tg_alias_pr = '{alias}'")
-    result = db_object.fetchone()
-    url = result[1]
-    title = result[2]
-    state = result[3]
-    comments_num = result[4]
-    changed_files = result[5]
+    session = Session(db_engine)
+    pull_request = session.execute(
+        select(GitHubPullRequest).where(
+            GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == alias
+        )
+    ).one()
+    url = pull_request.gh_pr_url
+    title = pull_request.gh_pr_title
+    state = pull_request.gh_pr_state
+    comments_num = pull_request.gh_commits
+    changed_files = pull_request.gh_changed_files
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Pull request: {}\n"
@@ -686,7 +741,8 @@ def query_handler(call):
                                   comments_num,
                                   changed_files),
                           reply_markup=ans.back_to_menu_and_back_kb())
-    update_user_state(call.message.chat.id, States.S_LOOK_PR_ALI)
+    update_user_state_with_session(call.message.chat.id, States.S_LOOK_PR_ALI, session)
+    finish_session(session)
 
 
 # END callback.handlers
@@ -700,46 +756,14 @@ def query_handler(call):
         call.data.split(" ")[-1] == ans.Answers.back_cal))
 def query_handler(call):
     user_id = call.message.chat.id
-    db_object.execute(
-        f"DELETE FROM gh_users  WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
-    db_connection.commit()
+    session = Session(db_engine)
+    delete_null_alias_from_users(user_id, session)
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           reply_markup=ans.back_to_previous_kb(),
                           text="Введите имя пользователя:")
-    update_user_state(call.message.chat.id, States.S_ADD_USER)
-
-
-#
-# # "back" when we entered gh repository
-# @bot.callback_query_handler(func=lambda call: (
-#         get_user_state(call.message.chat.id) == States.S_ALI_REPOS_ENTER and
-#         call.data.split(" ")[-1] == ans.Answers.back_cal))
-# def query_handler(call):
-#     user_id = call.message.chat.id
-#     db_object.execute(
-#         f"DELETE FROM repos  WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
-#     db_connection.commit()
-#     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-#                           reply_markup=ans.back_to_previous_kb(),
-#                           text="Введите владельца и имя репозитория через '/' \n"
-#                                "Пример: Brahialis0209/github-bot")
-#     update_user_state(call.message.chat.id, States.S_ADD_REPOS)
-
-# # "back" when we entered gh pull request
-# @bot.callback_query_handler(func=lambda call: (
-#         get_user_state(call.message.chat.id) == States.S_ALI_PR_ENTER and
-#         call.data.split(" ")[-1] == ans.Answers.back_cal))
-# def query_handler(call):
-#     user_id = call.message.chat.id
-#     db_object.execute(
-#         f"DELETE FROM pulls  WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
-#     db_connection.commit()
-#     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-#                           reply_markup=ans.back_to_previous_kb(),
-#                           text="Введите владельца, имя и номер pull request через '/' \n"
-#                                "Пример: Brahialis0209/github-bot/1")
-#     update_user_state(call.message.chat.id, States.S_ADD_PR)
+    update_user_state_with_session(call.message.chat.id, States.S_ADD_USER, session)
+    finish_session(session)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -752,29 +776,36 @@ def user_adding(message):
     if r.status_code == 200:
         dict_data = json.loads(r.text)
         name = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
-        db_object.execute(
-            f"SELECT tg_user_id, tg_alias_user "
-            f"FROM gh_users "
-            f"WHERE tg_user_id = '{message.from_user.id}' AND gh_username = '{name}'")
-        result = db_object.fetchall()
-        if len(result) != 0:
-            alias = result[0][1]
+
+        # Trying to find such users in database
+        session = Session(db_engine)
+        github_user = session.execute(
+            select(GitHubUsers).where(
+                GitHubUsers.tg_user_id == message.from_user.id and GitHubUsers.gh_username == name
+            )
+        ).one()
+        if github_user is not None:
+            # Such user has already been added to the database
             bot.send_message(chat_id=message.chat.id,
                              text="Такой пользователь уже существует в вашем сохранённом списке под псевдонимом: {}. "
-                                  "Введите другой ник.".format(alias),
+                                  "Введите другой ник.".format(github_user.tg_alias_user),
                              reply_markup=ans.back_to_previous_kb())
         else:
             dict_data = json.loads(r.text)
             gh_username = dict_data['name'] if dict_data['name'] is not None else dict_data['login']
-            db_object.execute(
-                "INSERT INTO gh_users(tg_user_id , gh_username, gh_user_avatar, gh_user_url, login) "
-                "VALUES (%s, %s, %s, %s, %s)",
-                (message.from_user.id, gh_username, dict_data['avatar_url'], dict_data['html_url'], dict_data['login']))
-            db_connection.commit()
-            update_user_state(message.from_user.id, States.S_ALI_USER_ENTER)
+            github_user = GitHubUsers(tg_user_id=message.from_user.id,
+                                      tg_alias_user=None,
+                                      gh_user_url=dict_data['html_url'],
+                                      gh_username=gh_username,
+                                      gh_user_avatar=dict_data['avatar_url'],
+                                      login=dict_data['login'])
+            session.add(github_user)
+            session.commit()
+            update_user_state_with_session(message.from_user.id, States.S_ALI_USER_ENTER, session)
             bot.send_message(chat_id=message.chat.id,
                              reply_markup=ans.back_to_previous_kb(),
                              text=f"Введите alias для нового пользователя {dict_data['login']}.")
+        finish_session(session)
 
     else:
         bot.send_message(chat_id=message.chat.id,
@@ -790,11 +821,13 @@ def is_repos_from_gh(data):
 @bot.callback_query_handler(func=lambda call: is_repos_from_gh(call.data))
 def repos_adding(call):
     user_login = call.data.split('/')[0]
-    db_object.execute(
-        f"SELECT tg_user_id, tg_alias_user "
-        f"FROM gh_users "
-        f"WHERE tg_user_id = '{call.from_user.id}' AND login = '{user_login}'")
-    user_alias = db_object.fetchall()[0][1]
+    session = Session(db_engine)
+    github_user = session.execute(
+        select(GitHubUsers).where(
+            GitHubUsers.tg_user_id == call.from_user.id and GitHubUsers.login == user_login
+        )
+    ).one()
+    user_alias = github_user.tg_alias_user
 
     query_url = f"https://api.github.com/repos/{call.data.split()[0]}"
     headers = {'Authorization': f'token {token}'}
@@ -802,13 +835,14 @@ def repos_adding(call):
     if r.status_code == 200:
         dict_data = json.loads(r.text)
         name = dict_data['full_name'] if dict_data['full_name'] is not None else dict_data['id']
-        db_object.execute(
-            f"SELECT tg_user_id, tg_alias_repos "
-            f"FROM repos "
-            f"WHERE tg_user_id = '{call.from_user.id}' AND gh_reposname = '{name}'")
-        result = db_object.fetchall()
-        if len(result) != 0:
-            alias = result[0][1]
+        github_repos = session.execute(
+            select(GitHubRepos).where(
+                GitHubRepos.tg_user_id == call.from_user.id and GitHubRepos.gh_reposname == name
+            )
+        ).one()
+
+        if github_repos is not None:
+            alias = github_repos.tg_alias_repos
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
                                   text="Такой репозиторий уже существует в вашем сохранённом списке "
@@ -818,12 +852,14 @@ def repos_adding(call):
         else:
             dict_data = json.loads(r.text)
             gh_reposname = dict_data['full_name'] if dict_data['full_name'] is not None else dict_data['id']
-            db_object.execute(
-                "INSERT INTO repos(tg_user_id , gh_reposname, gh_repos_url, gh_repos_description) "
-                "VALUES (%s, %s, %s, %s)",
-                (call.from_user.id, gh_reposname, dict_data['html_url'], dict_data['description']))
-            db_connection.commit()
-            update_user_state(call.from_user.id, States.S_ALI_REPOS_ENTER)
+
+            github_repos = GitHubRepos(tg_user_id=call.from_user.id,
+                                       gh_reposname=gh_reposname,
+                                       gh_repos_url=dict_data['html_url'],
+                                       gh_repos_description=dict_data['description'])
+            session.add(github_repos)
+            session.commit()
+            update_user_state_with_session(call.from_user.id, States.S_ALI_REPOS_ENTER, session)
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
                                   reply_markup=ans.back_to_previous_kb(user_alias),
@@ -835,7 +871,8 @@ def repos_adding(call):
                               text="Такой репозиторий найти не удалось, попробуйте ввести данные правильно.",
                               reply_markup=ans.back_to_previous_kb(user_alias))
 
-    update_user_state(call.from_user.id, States.S_ALI_REPOS_ENTER)
+    update_user_state_with_session(call.from_user.id, States.S_ALI_REPOS_ENTER, session)
+    finish_session(session)
 
 
 def is_pr_from_gh(data):
@@ -849,11 +886,13 @@ def pr_adding(call):
 
     repos_fullname = f'{tokens[0]}/{tokens[1]}'
 
-    db_object.execute(
-        f"SELECT tg_user_id, tg_alias_repos "
-        f"FROM repos "
-        f"WHERE tg_user_id = '{call.from_user.id}' AND gh_reposname = '{repos_fullname}'")
-    repos_alias = db_object.fetchall()[0][1]
+    session = Session(db_engine)
+    github_repos = session.execute(
+        select(GitHubRepos).where(
+            GitHubRepos.tg_user_id == call.from_user.id and GitHubRepos.gh_reposname == repos_fullname
+        )
+    ).one()
+    repos_alias = github_repos.tg_alias_repos
 
     query_url = f"https://api.github.com/repos/{tokens[0]}/{tokens[1]}/pulls/{tokens[2]}"
     headers = {'Authorization': f'token {token}'}
@@ -861,12 +900,15 @@ def pr_adding(call):
     if r.status_code == 200:
         dict_data = json.loads(r.text)
         name = dict_data['id']
-        db_object.execute(
-            f"SELECT tg_user_id, tg_alias_pr "
-            f"FROM pulls WHERE tg_user_id = '{call.from_user.id}' AND gh_prid = '{name}'")
-        result = db_object.fetchall()
-        if len(result) != 0:
-            alias = result[0][1]
+
+        pull_request = session.execute(
+            select(GitHubPullRequest).where(
+                GitHubPullRequest.tg_user_id == call.from_user.id and GitHubPullRequest.gh_prid == name
+            )
+        ).one()
+
+        if pull_request is not None:
+            alias = pull_request.tg_alias_pr
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
                                   text="Такой pull request уже существует в вашем сохранённом списке "
@@ -876,19 +918,17 @@ def pr_adding(call):
         else:
             dict_data = json.loads(r.text)
             gh_prname = dict_data['id']
-            db_object.execute(
-                "INSERT INTO pulls(tg_user_id , gh_prid, gh_pr_url, gh_pr_title, "
-                "gh_pr_state, gh_commits, gh_changed_files) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (call.from_user.id,
-                 gh_prname,
-                 dict_data['html_url'],
-                 dict_data['title'],
-                 dict_data['state'],
-                 dict_data['commits'],
-                 dict_data['changed_files']))
-            db_connection.commit()
-            update_user_state(call.from_user.id, States.S_ALI_PR_ENTER)
+
+            pull_request = GitHubPullRequest(tg_user_id=call.from_user.id,
+                                             gh_prname=gh_prname,
+                                             gh_pr_url=dict_data['html_url'],
+                                             gh_pr_title=dict_data['title'],
+                                             gh_pr_state=dict_data['state'],
+                                             gh_commits=dict_data['commits'],
+                                             gh_changed_files=dict_data['changed_files'])
+            session.add(pull_request)
+            session.commit()
+            update_user_state_with_session(call.from_user.id, States.S_ALI_PR_ENTER, session)
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
                                   reply_markup=ans.back_to_previous_kb(repos_alias),
@@ -900,7 +940,8 @@ def pr_adding(call):
                               text="Такой pull request найти не удалось, попробуйте ввести данные правильно.",
                               reply_markup=ans.back_to_previous_kb(repos_alias))
 
-    update_user_state(call.from_user.id, States.S_ALI_PR_ENTER)
+    update_user_state_with_session(call.from_user.id, States.S_ALI_PR_ENTER, session)
+    finish_session(session)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -944,18 +985,20 @@ def is_user_ali_added(data):
 def query_handler(call):
     user_id = call.message.chat.id
     alias = ' '.join(call.data.split(' ')[:-1])
-    db_object.execute(
-        f"SELECT gh_username, gh_user_avatar, gh_user_url "
-        f"FROM gh_users "
-        f"WHERE tg_user_id = '{user_id}' AND tg_alias_user = '{alias}'")
-    result = db_object.fetchone()
-    name = result[0]
-    url = result[2]
+
+    session = Session(db_engine)
+    github_user = session.execute(
+        select(GitHubUsers).where(GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias)
+    ).one()
+
+    name = github_user.gh_username
+    url = github_user.gh_user_url
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Имя: {}\n"
                                "🔘 Ссылка на пользователя: {}.".format(name, url),
                           reply_markup=ans.back_to_menu_kb())
+    finish_session(session)
 
 
 def is_repos_ali_added(data):
@@ -967,20 +1010,24 @@ def is_repos_ali_added(data):
 def query_handler(call):
     user_id = call.message.chat.id
     alias = ' '.join(call.data.split(' ')[:-1])
-    db_object.execute(
-        f"SELECT gh_reposname, gh_repos_url, gh_repos_description "
-        f"FROM repos "
-        f"WHERE tg_user_id = '{user_id}' AND tg_alias_repos = '{alias}'")
-    result = db_object.fetchone()
-    name = result[0]
-    url = result[1]
-    description = result[2]
+
+    session = Session(db_engine)
+    github_repos = session.execute(
+        select(GitHubRepos).where(
+            GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias
+        )
+    ).one()
+
+    name = github_repos.gh_reposname
+    url = github_repos.gh_repos_url
+    description = github_repos.gh_repos_description
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Репозиторий: {}\n"
                                "🔘 Ссылка на репозиторий: {}\n"
                                "🔘 Описание: {}.".format(name, url, description),
                           reply_markup=ans.back_to_menu_kb())
+    finish_session(session)
 
 
 def is_pr_ali_added(data):
@@ -992,15 +1039,19 @@ def is_pr_ali_added(data):
 def query_handler(call):
     user_id = call.message.chat.id
     alias = ' '.join(call.data.split(' ')[:-1])
-    db_object.execute(
-        f"SELECT gh_prid, gh_pr_url, gh_pr_title, gh_pr_state, gh_commits, gh_changed_files "
-        f"FROM pulls WHERE tg_user_id = '{user_id}' AND tg_alias_pr = '{alias}'")
-    result = db_object.fetchone()
-    url = result[1]
-    title = result[2]
-    state = result[3]
-    comments_num = result[4]
-    changed_files = result[5]
+
+    session = Session(db_engine)
+    pull_request = session.execute(
+        select(GitHubPullRequest).where(
+            GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == alias
+        )
+    ).one()
+
+    url = pull_request.gh_pr_url
+    title = pull_request.gh_pr_title
+    state = pull_request.gh_pr_state
+    commits_num = pull_request.gh_commits
+    changed_files = pull_request.gh_changed_files
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Pull request: {}\n"
@@ -1011,9 +1062,10 @@ def query_handler(call):
                           .format(title,
                                   url,
                                   state,
-                                  comments_num,
+                                  commits_num,
                                   changed_files),
                           reply_markup=ans.back_to_menu_kb())
+    finish_session(session)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1022,18 +1074,24 @@ def query_handler(call):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = ' '.join(message.text.split())
-    db_object.execute(f"SELECT gh_username FROM gh_users WHERE tg_alias_user = '{alias}' AND tg_user_id = '{user_id}'")
-    result = db_object.fetchone()
-    if not result:
-        db_object.execute(
-            f"UPDATE gh_users SET tg_alias_user = '{alias}' WHERE tg_user_id = '{user_id}' AND tg_alias_user IS NULL")
-        db_connection.commit()
-        update_user_state(message.from_user.id, States.S_ALI_USER_ADDED)
+
+    session = Session(db_engine)
+    github_user = session.execute(
+        select(GitHubUsers).where(GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias)
+    )
+    if github_user is None:
+        github_user = session.execute(
+            select(GitHubUsers).where(GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == None)
+        ).one()
+        github_user.tg_alias_user = alias
+        session.commit()
+        update_user_state_with_session(message.from_user.id, States.S_ALI_USER_ADDED, session)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.user_ali_added_kb(alias),
                          text="Пользователь {} добавлен.".format(alias))
     else:
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(),
                          text="Такой alias уже есть. Введите уникальный.")
+    finish_session(session)
 
 
 #  we enter alias for repos
@@ -1041,25 +1099,34 @@ def alias_adding(message):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = ' '.join(message.text.split())
-    db_object.execute(f"SELECT gh_reposname FROM repos WHERE tg_alias_repos = '{alias}' AND tg_user_id = '{user_id}'")
-    result = db_object.fetchone()
-    if not result:
-        db_object.execute(
-            f"UPDATE repos SET tg_alias_repos = '{alias}' WHERE tg_user_id = '{user_id}' AND tg_alias_repos IS NULL")
-        db_connection.commit()
-        update_user_state(message.from_user.id, States.S_ALI_REPOS_ADDED)
+
+    session = Session(db_engine)
+    github_repos = session.execute(
+        select(GitHubRepos).where(GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias)
+    ).one()
+
+    if github_repos is None:
+        github_repos = session.execute(
+            select(GitHubRepos).where(
+                GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == None
+            )
+        ).one()
+        github_repos.tg_alias_repos = alias
+        session.commit()
+        update_user_state_with_session(message.from_user.id, States.S_ALI_REPOS_ADDED, session)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.repos_ali_added_kb(alias),
                          text="Репозиторий {} добавлен.".format(alias))
     else:
-        login = result[0].split('/')[0]
+        login = github_repos.gh_reposname.split('/')[0]
+        github_user_alias = session.execute(
+            select(GitHubUsers.tg_alias_user).where(
+                GitHubUsers.tg_user_id == user_id and GitHubUsers.login == login
+            )
+        ).one()
 
-        db_object.execute(f"SELECT tg_alias_user "
-                          f"FROM gh_users "
-                          f"WHERE login = '{login}' AND tg_user_id = '{user_id}'")
-        result = db_object.fetchone()
-
-        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(result[0]),
+        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(github_user_alias),
                          text="Такой alias уже есть. Введите уникальный.")
+    finish_session(session)
 
 
 #  we enter alias for pr
@@ -1067,27 +1134,38 @@ def alias_adding(message):
 def alias_adding(message):
     user_id = message.from_user.id
     alias = ' '.join(message.text.split())
-    db_object.execute(f"SELECT gh_prid, gh_pr_url "
-                      f"FROM pulls "
-                      f"WHERE tg_alias_pr = '{alias}' AND tg_user_id = '{user_id}'")
-    result = db_object.fetchone()
-    if not result:
-        db_object.execute(
-            f"UPDATE pulls SET tg_alias_pr = '{alias}' WHERE tg_user_id = '{user_id}' AND tg_alias_pr IS NULL")
-        db_connection.commit()
-        update_user_state(message.from_user.id, States.S_ALI_PR_ADDED)
+
+    session = Session(db_engine)
+    pull_request = session.execute(
+        select(GitHubPullRequest).where(
+            GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == alias
+        )
+    ).one()
+
+    if pull_request is None:
+        pull_request = session.execute(
+            select(GitHubPullRequest).where(
+                GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == None
+            )
+        ).one()
+        pull_request.tg_alias_pr = alias
+        session.commit()
+        update_user_state_with_session(message.from_user.id, States.S_ALI_PR_ADDED, session)
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.pr_ali_added_kb(alias),
                          text="Pull request {} добавлен.".format(alias))
     else:
-        repo = '/'.join(result[1].split('/')[-4:-2])
+        gh_pr_url = pull_request.gh_pr_url
+        repo = '/'.join(gh_pr_url.split('/')[-4:-2])
 
-        db_object.execute(f"SELECT tg_alias_repos "
-                          f"FROM repos "
-                          f"WHERE gh_reposname = '{repo}' AND tg_user_id = '{user_id}'")
-        result = db_object.fetchone()
+        repos_alias = session.execute(
+            select(GitHubRepos.tg_alias_repos).where(
+                GitHubRepos.tg_user_id == user_id and GitHubRepos.gh_reposname == repo
+            )
+        ).one()
 
-        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(result[0]),
+        bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(repos_alias),
                          text="Такой alias уже есть. Введите уникальный.")
+    finish_session(session)
 
 
 # END MESS HANDLERS
