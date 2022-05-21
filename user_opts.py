@@ -41,8 +41,9 @@ def aliases_kb_for_user(user_id, session: Session):
     ).all()
     mark = types.InlineKeyboardMarkup()
     for alias in aliases:
-        mark.row(types.InlineKeyboardButton(alias,
-                                            callback_data=alias + " " + User.user_alias_cal))
+        alias_str = str(alias[0])
+        mark.row(types.InlineKeyboardButton(alias_str,
+                                            callback_data=alias_str + " " + User.user_alias_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark
@@ -55,8 +56,9 @@ def aliases_kb_for_repos(user_id, session: Session):
     ).all()
     mark = types.InlineKeyboardMarkup()
     for alias in aliases:
-        mark.row(types.InlineKeyboardButton(alias,
-                                            callback_data=alias + " " + User.repos_alias_cal))
+        alias_str = str(alias[0])
+        mark.row(types.InlineKeyboardButton(alias_str,
+                                            callback_data=alias_str + " " + User.repos_alias_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark
@@ -69,8 +71,9 @@ def aliases_kb_for_pr(user_id, session: Session):
     ).all()
     mark = types.InlineKeyboardMarkup()
     for alias in aliases:
-        mark.row(types.InlineKeyboardButton(alias,
-                                            callback_data=alias + " " + User.pr_alias_cal))
+        alias_str = str(alias[0])
+        mark.row(types.InlineKeyboardButton(alias_str,
+                                            callback_data=alias_str + " " + User.pr_alias_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
                                         callback_data=" " + User.back_cal))
     return mark
