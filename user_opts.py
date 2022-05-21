@@ -1,4 +1,7 @@
 from telebot import types
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from data_models import GitHubUsers, GitHubRepos, GitHubPullRequest
 
 
 class States:
@@ -31,14 +34,13 @@ class States:
     S_ALI_PR_ADDED = 27  # added user alias
 
 
-def aliases_kb_for_user(db_object, user_id):
-    db_object.execute(
-        f"SELECT tg_alias_user FROM gh_users WHERE tg_user_id = '{user_id}'")
-    result = db_object.fetchall()
-    len_hist = len(result)
+def aliases_kb_for_user(user_id, session: Session):
+    # Empty aliases list is not allowed here
+    aliases = session.execute(
+        select(GitHubUsers.tg_alias_user).where(GitHubUsers.tg_user_id == user_id)
+    ).all()
     mark = types.InlineKeyboardMarkup()
-    for i in range(len_hist):
-        alias = result[i][0]
+    for alias in aliases:
         mark.row(types.InlineKeyboardButton(alias,
                                             callback_data=alias + " " + User.user_alias_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
@@ -46,14 +48,13 @@ def aliases_kb_for_user(db_object, user_id):
     return mark
 
 
-def aliases_kb_for_repos(db_object, user_id):
-    db_object.execute(
-        f"SELECT tg_alias_repos FROM repos WHERE tg_user_id = '{user_id}'")
-    result = db_object.fetchall()
-    len_hist = len(result)
+def aliases_kb_for_repos(user_id, session: Session):
+    # Empty aliases list is not allowed here
+    aliases = session.execute(
+        select(GitHubRepos.tg_alias_repos).where(GitHubRepos.tg_user_id == user_id)
+    ).all()
     mark = types.InlineKeyboardMarkup()
-    for i in range(len_hist):
-        alias = result[i][0]
+    for alias in aliases:
         mark.row(types.InlineKeyboardButton(alias,
                                             callback_data=alias + " " + User.repos_alias_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
@@ -61,14 +62,13 @@ def aliases_kb_for_repos(db_object, user_id):
     return mark
 
 
-def aliases_kb_for_pr(db_object, user_id):
-    db_object.execute(
-        f"SELECT tg_alias_pr FROM pulls WHERE tg_user_id = '{user_id}'")
-    result = db_object.fetchall()
-    len_hist = len(result)
+def aliases_kb_for_pr(user_id, session: Session):
+    # Empty aliases list is not allowed here
+    aliases = session.execute(
+        select(GitHubPullRequest.tg_alias_pr).where(GitHubPullRequest.tg_user_id == user_id)
+    ).all()
     mark = types.InlineKeyboardMarkup()
-    for i in range(len_hist):
-        alias = result[i][0]
+    for alias in aliases:
         mark.row(types.InlineKeyboardButton(alias,
                                             callback_data=alias + " " + User.pr_alias_cal))
     mark.row(types.InlineKeyboardButton(User.back_inf,
