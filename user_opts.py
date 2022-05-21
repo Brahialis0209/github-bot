@@ -36,9 +36,7 @@ class States:
 
 def aliases_kb_for_user(user_id, session: Session):
     # Empty aliases list is not allowed here
-    aliases = session.query(GitHubUsers.tg_alias_user).filter_by(
-        GitHubUsers.tg_user_id == user_id
-    ).all()
+    aliases = session.query(GitHubUsers.tg_alias_user).filter_by(tg_user_id=user_id).all()
     mark = types.InlineKeyboardMarkup()
     for alias in aliases:
         alias_str = str(alias[0])
@@ -51,9 +49,7 @@ def aliases_kb_for_user(user_id, session: Session):
 
 def aliases_kb_for_repos(user_id, session: Session):
     # Empty aliases list is not allowed here
-    aliases = session.query(GitHubRepos.tg_alias_repos).filter_by(
-        GitHubRepos.tg_user_id == user_id
-    ).all()
+    aliases = session.query(GitHubRepos.tg_alias_repos).filter_by(tg_user_id=user_id).all()
     mark = types.InlineKeyboardMarkup()
     for alias in aliases:
         alias_str = str(alias[0])
@@ -66,9 +62,7 @@ def aliases_kb_for_repos(user_id, session: Session):
 
 def aliases_kb_for_pr(user_id, session: Session):
     # Empty aliases list is not allowed here
-    aliases = session.query(GitHubPullRequest.tg_alias_pr).filter_by(
-        GitHubPullRequest.tg_user_id == user_id
-    ).all()
+    aliases = session.query(GitHubPullRequest.tg_alias_pr).filter_by(tg_user_id=user_id).all()
     mark = types.InlineKeyboardMarkup()
     for alias in aliases:
         alias_str = str(alias[0])

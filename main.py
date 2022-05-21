@@ -41,7 +41,7 @@ def update_user_state(user_id, state):
 
 
 def update_user_state_with_session(user_id, state, session: Session):
-    tg_user = session.query(TgUser).filter_by(TgUser.tg_user_id == user_id).first()
+    tg_user = session.query(TgUser).filter_by(tg_user_id=user_id).first()
     if tg_user is not None:
         tg_user.user_state = state
     session.commit()
@@ -55,16 +55,16 @@ def get_user_state(user_id):
 
 
 def get_user_state_with_session(user_id, session: Session):
-    tg_user = session.query(TgUser).filter_by(TgUser.tg_user_id == int(user_id)).first()
+    tg_user = session.query(TgUser).filter_by(tg_user_id=int(user_id)).first()
     return -1 if tg_user is None else tg_user.user_state
 
 
 def delete_null_alias_from_users(user_id, session: Session):
     # Use "==" instead of "is" in comparison with None to properly construct SQL query
     null_alias = session.query(GitHubUsers).filter_by(
-        GitHubUsers.tg_user_id == user_id and
-        GitHubUsers.tg_alias_user == None  # noqa
-    ).all()
+        tg_user_id=user_id,
+        tg_alias_user=None  # noqa
+    ).first()
     session.delete(null_alias)
     session.commit()
     session.flush()
@@ -73,9 +73,9 @@ def delete_null_alias_from_users(user_id, session: Session):
 def delete_null_alias_from_repos(user_id, session: Session):
     # Use "==" instead of "is" in comparison with None to properly construct SQL query
     null_alias = session.query(GitHubRepos).filter_by(
-        GitHubRepos.tg_user_id == user_id and
-        GitHubRepos.tg_alias_repos == None  # noqa
-    )
+        tg_user_id=user_id,
+        tg_alias_repos=None  # noqa
+    ).first()
     session.delete(null_alias)
     session.commit()
     session.flush()
@@ -84,8 +84,8 @@ def delete_null_alias_from_repos(user_id, session: Session):
 def delete_null_alias_from_pull_requests(user_id, session: Session):
     # Use "==" instead of "is" in comparison with None to properly construct SQL query
     null_alias = session.query(GitHubPullRequest).filter_by(
-        GitHubPullRequest.tg_user_id == user_id and
-        GitHubPullRequest.tg_alias_pr == None  # noqa
+        tg_user_id=user_id,
+        tg_alias_pr=None  # noqa
     )
     session.delete(null_alias)
     session.commit()
@@ -104,7 +104,7 @@ def start_message(message):
     username = message.from_user.username
     # Find out if there's a new user or he/she has been already registered
     session = Session(db_engine)
-    current_user = session.query(TgUser).filter_by(TgUser.tg_user_id == int(user_id)).first()
+    current_user = session.query(TgUser).filter_by(tg_user_id=int(user_id)).first()
     if current_user is None:
         # User is not in the database -> add user to the database and set initial state
         current_user = TgUser(tg_user_id=user_id, tg_username=username, user_state=States.S_START)
@@ -304,7 +304,7 @@ def is_user_choose(data):
 def query_handler(call):
     session = Session(db_engine)
     github_user_aliases = session.query(GitHubUsers.tg_alias_user).filter_by(
-        GitHubUsers.tg_user_id == call.message.chat.id
+        tg_user_id=call.message.chat.id
     ).all()
     if github_user_aliases is None or len(github_user_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
@@ -331,7 +331,7 @@ def is_repos_choose(data):
 def query_handler(call):
     session = Session(db_engine)
     repos_aliases = session.query(GitHubRepos.tg_alias_repos).filter_by(
-        GitHubRepos.tg_user_id == call.message.chat.id
+        tg_user_id=call.message.chat.id
     ).all()
     if repos_aliases is None or len(repos_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
@@ -358,7 +358,7 @@ def is_pr_choose(data):
 def query_handler(call):
     session = Session(db_engine)
     pr_aliases = session.query(GitHubPullRequest.tg_alias_pr).filter_by(
-        GitHubPullRequest.tg_user_id == call.message.chat.id
+        tg_user_id=call.message.chat.id
     ).all()
     if pr_aliases is None or len(pr_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
@@ -435,7 +435,7 @@ def is_repos_add(data):
 def query_handler(call):
     session = Session(db_engine)
     github_user_aliases = session.query(GitHubUsers.tg_alias_user).filter_by(
-        GitHubUsers.tg_user_id == call.message.chat.id
+        tg_user_id=call.message.chat.id
     ).all()
     if github_user_aliases is None or len(github_user_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
@@ -468,7 +468,7 @@ def is_pr_add(data):
 def query_handler(call):
     session = Session(db_engine)
     repos_aliases = session.query(GitHubRepos.tg_alias_repos).filter_by(
-        GitHubRepos.tg_user_id == call.message.chat.id
+        tg_user_id=call.message.chat.id
     ).all()
     if repos_aliases is None or len(repos_aliases) == 0:
         mark = types.InlineKeyboardMarkup()
@@ -578,7 +578,8 @@ def query_handler(call):
 
     session = Session(db_engine)
     github_user = session.query(GitHubUsers).filter_by(
-        GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias
+        tg_user_id=user_id,
+        tg_alias_user=alias
     ).first()
 
     name = github_user.gh_username
@@ -610,7 +611,8 @@ def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
     github_user = session.query(GitHubUsers).filter_by(
-        GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias
+        tg_user_id=user_id,
+        tg_alias_user=alias
     ).first()
 
     name = github_user.login
@@ -657,7 +659,8 @@ def query_handler(call):
     session = Session(db_engine)
 
     github_repos = session.query(GitHubRepos).filter_by(
-        GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias
+        tg_user_id=user_id,
+        tg_alias_repos=alias
     ).first()
 
     name = github_repos.gh_reposname
@@ -692,7 +695,8 @@ def query_handler(call):
     user_id = call.message.chat.id
 
     github_repos = session.query(GitHubRepos).filter_by(
-        GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias
+        tg_user_id=user_id,
+        tg_alias_repos=alias
     ).first()
 
     name = github_repos.gh_reposname
@@ -736,7 +740,8 @@ def query_handler(call):
     user_id = call.message.chat.id
     session = Session(db_engine)
     pull_request = session.query(GitHubPullRequest).filter_by(
-        GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == alias
+        tg_user_id=user_id,
+        tg_alias_pr=alias
     ).first()
     url = pull_request.gh_pr_url
     title = pull_request.gh_pr_title
@@ -795,7 +800,8 @@ def user_adding(message):
         # Trying to find such users in database
         session = Session(db_engine)
         github_user = session.query(GitHubUsers).filter_by(
-            GitHubUsers.tg_user_id == message.from_user.id and GitHubUsers.gh_username == name
+            tg_user_id=message.from_user.id,
+            gh_username=name
         ).first()
         if github_user is not None:
             # Such user has already been added to the database
@@ -836,7 +842,8 @@ def repos_adding(call):
     user_login = call.data.split('/')[0]
     session = Session(db_engine)
     github_user = session.query(GitHubUsers).filter_by(
-        GitHubUsers.tg_user_id == call.from_user.id and GitHubUsers.login == user_login
+        tg_user_id=call.from_user.id,
+        login=user_login
     ).first()
     user_alias = github_user.tg_alias_user
 
@@ -847,7 +854,8 @@ def repos_adding(call):
         dict_data = json.loads(r.text)
         name = dict_data['full_name'] if dict_data['full_name'] is not None else dict_data['id']
         github_repos = session.query(GitHubRepos).filter_by(
-            GitHubRepos.tg_user_id == call.from_user.id and GitHubRepos.gh_reposname == name
+            tg_user_id=call.from_user.id,
+            gh_reposname=name
         ).first()
 
         if github_repos is not None:
@@ -897,7 +905,8 @@ def pr_adding(call):
 
     session = Session(db_engine)
     github_repos = session.query(GitHubRepos).filter_by(
-        GitHubRepos.tg_user_id == call.from_user.id and GitHubRepos.gh_reposname == repos_fullname
+        tg_user_id=call.from_user.id,
+        gh_reposname=repos_fullname
     ).first()
     repos_alias = github_repos.tg_alias_repos
 
@@ -909,7 +918,8 @@ def pr_adding(call):
         name = dict_data['id']
 
         pull_request = session.query(GitHubPullRequest).filter_by(
-            GitHubPullRequest.tg_user_id == call.from_user.id and GitHubPullRequest.gh_prid == name
+            tg_user_id=call.from_user.id,
+            gh_prid=name
         ).first()
 
         if pull_request is not None:
@@ -993,7 +1003,8 @@ def query_handler(call):
 
     session = Session(db_engine)
     github_user = session.query(GitHubUsers).filter_by(
-        GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias
+        tg_user_id=user_id,
+        tg_alias_user=alias
     ).first()
 
     name = github_user.gh_username
@@ -1018,7 +1029,8 @@ def query_handler(call):
 
     session = Session(db_engine)
     github_repos = session.query(GitHubRepos).filter_by(
-        GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias
+        tg_user_id=user_id,
+        tg_alias_repos=alias
     ).first()
 
     name = github_repos.gh_reposname
@@ -1045,7 +1057,8 @@ def query_handler(call):
 
     session = Session(db_engine)
     pull_request = session.query(GitHubPullRequest).filter_by(
-        GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == alias
+        tg_user_id=user_id,
+        tg_alias_pr=alias
     ).first()
 
     url = pull_request.gh_pr_url
@@ -1078,11 +1091,13 @@ def alias_adding(message):
 
     session = Session(db_engine)
     github_user = session.query(GitHubUsers).filter_by(
-        GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == alias
+        tg_user_id=user_id,
+        tg_alias_user=alias
     )
     if github_user is None:
         github_user = session.query(GitHubUsers).filter_by(
-            GitHubUsers.tg_user_id == user_id and GitHubUsers.tg_alias_user == None  # noqa
+            tg_user_id=user_id,
+            tg_alias_user=None  # noqa
         ).first()
         github_user.tg_alias_user = alias
         session.commit()
@@ -1103,12 +1118,14 @@ def alias_adding(message):
 
     session = Session(db_engine)
     github_repos = session.query(GitHubRepos).filter_by(
-        GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == alias
+        tg_user_id=user_id,
+        tg_alias_repos=alias
     ).first()
 
     if github_repos is None:
         github_repos = session.query(GitHubRepos).filter_by(
-            GitHubRepos.tg_user_id == user_id and GitHubRepos.tg_alias_repos == None  # noqa
+            tg_user_id=user_id,
+            tg_alias_repos=None  # noqa
         ).first()
         github_repos.tg_alias_repos = alias
         session.commit()
@@ -1118,7 +1135,8 @@ def alias_adding(message):
     else:
         login = github_repos.gh_reposname.split('/')[0]
         github_user_alias = session.query(GitHubUsers.tg_alias_user).filter_by(
-            GitHubUsers.tg_user_id == user_id and GitHubUsers.login == login
+            tg_user_id=user_id,
+            login=login
         ).first()
 
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(github_user_alias),
@@ -1134,13 +1152,14 @@ def alias_adding(message):
 
     session = Session(db_engine)
     pull_request = session.query(GitHubPullRequest).filter_by(
-        GitHubPullRequest.tg_user_id == user_id and GitHubPullRequest.tg_alias_pr == alias
+        tg_user_id=user_id,
+        tg_alias_pr=alias
     ).first()
 
     if pull_request is None:
         pull_request = session.query(GitHubPullRequest).filter_by(
-            GitHubPullRequest.tg_user_id == user_id
-            and GitHubPullRequest.tg_alias_pr == None  # noqa
+            tg_user_id=user_id,
+            tg_alias_pr=None  # noqa
         ).first()
         pull_request.tg_alias_pr = alias
         session.commit()
@@ -1152,7 +1171,8 @@ def alias_adding(message):
         repo = '/'.join(gh_pr_url.split('/')[-4:-2])
 
         repos_alias = session.query(GitHubRepos.tg_alias_repos).filter_by(
-            GitHubRepos.tg_user_id == user_id and GitHubRepos.gh_reposname == repo
+            tg_user_id=user_id,
+            gh_reposname=repo
         ).first()
 
         bot.send_message(chat_id=message.chat.id, reply_markup=ans.back_to_previous_kb(repos_alias),
