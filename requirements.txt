@@ -2,4 +2,4 @@ pyTelegramBotAPI
 flask
 psycopg2
 requests
-SQLAlchemy
+SQLAlchemy<1.4.0
