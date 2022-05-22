@@ -26,7 +26,7 @@ class TgUser(Base):
 class GitHubUsers(Base):
     __tablename__ = 'gh_users'
 
-    id = Column(Integer, primary_key=True)
+    row_id = Column(Integer, primary_key=True)
     tg_user_id = Column(Integer, ForeignKey('tg_users.tg_user_id'))
     tg_alias_user = Column(String)  # User-defined alias
     gh_user_url = Column(String)  # URL to request info about user
@@ -43,7 +43,7 @@ class GitHubUsers(Base):
 class GitHubRepos(Base):
     __tablename__ = 'repos'
 
-    id = Column(Integer, primary_key=True)
+    row_id = Column(Integer, primary_key=True)
     tg_user_id = Column(Integer, ForeignKey('tg_users.tg_user_id'))
     tg_alias_repos = Column(String)  # User-defined alias
     gh_repos_url = Column(String)  # URL to request info about repository
@@ -59,7 +59,7 @@ class GitHubRepos(Base):
 class GitHubPullRequest(Base):
     __tablename__ = 'pulls'
 
-    id = Column(Integer, primary_key=True)
+    row_id = Column(Integer, primary_key=True)
     tg_user_id = Column(Integer, ForeignKey('tg_users.tg_user_id'))
     tg_alias_pr = Column(String)  # User-defined alias
     gh_pr_url = Column(String)  # URL to request info about repository
