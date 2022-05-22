@@ -89,7 +89,7 @@ def delete_null_alias_from_pull_requests(user_id, session: Session):
     null_alias = session.query(GitHubPullRequest).filter_by(
         tg_user_id=user_id,
         tg_alias_pr=None  # noqa
-    )
+    ).first()
     if null_alias is not None:
         session.delete(null_alias)
         session.commit()
@@ -1097,7 +1097,7 @@ def alias_adding(message):
     github_user = session.query(GitHubUsers).filter_by(
         tg_user_id=user_id,
         tg_alias_user=alias
-    )
+    ).first()
     if github_user is None:
         github_user = session.query(GitHubUsers).filter_by(
             tg_user_id=user_id,
