@@ -38,6 +38,7 @@ Base.metadata.create_all(db_engine)
 def update_user_state(user_id, state):
     session = Session(db_engine)
     update_user_state_with_session(user_id, state, session)
+    finish_session(session)
 
 
 def update_user_state_with_session(user_id, state, session: Session):
