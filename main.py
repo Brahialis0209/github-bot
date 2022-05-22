@@ -65,9 +65,10 @@ def delete_null_alias_from_users(user_id, session: Session):
         tg_user_id=user_id,
         tg_alias_user=None  # noqa
     ).first()
-    session.delete(null_alias)
-    session.commit()
-    session.flush()
+    if null_alias is not None:
+        session.delete(null_alias)
+        session.commit()
+        session.flush()
 
 
 def delete_null_alias_from_repos(user_id, session: Session):
@@ -76,9 +77,10 @@ def delete_null_alias_from_repos(user_id, session: Session):
         tg_user_id=user_id,
         tg_alias_repos=None  # noqa
     ).first()
-    session.delete(null_alias)
-    session.commit()
-    session.flush()
+    if null_alias is not None:
+        session.delete(null_alias)
+        session.commit()
+        session.flush()
 
 
 def delete_null_alias_from_pull_requests(user_id, session: Session):
@@ -87,9 +89,10 @@ def delete_null_alias_from_pull_requests(user_id, session: Session):
         tg_user_id=user_id,
         tg_alias_pr=None  # noqa
     )
-    session.delete(null_alias)
-    session.commit()
-    session.flush()
+    if null_alias is not None:
+        session.delete(null_alias)
+        session.commit()
+        session.flush()
 
 
 def finish_session(session: Session):
