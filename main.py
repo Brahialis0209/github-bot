@@ -13,6 +13,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from data_models import Base, TgUser, GitHubUsers, GitHubRepos, GitHubPullRequest
+from detail_info import DetailInfo
 
 
 logger = telebot.logger
@@ -670,7 +671,7 @@ def query_handler(call):
 
     name = github_repos.gh_reposname
     url = github_repos.gh_repos_url
-    description = github_repos.gh_repos_description
+    description = DetailInfo.request_repos_details(token, github_repos.gh_reposname)
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Репозиторий: {}\n"
@@ -749,10 +750,11 @@ def query_handler(call):
         tg_alias_pr=alias
     ).first()
     url = pull_request.gh_pr_url
-    title = pull_request.gh_pr_title
-    state = pull_request.gh_pr_state
-    comments_num = pull_request.gh_commits
-    changed_files = pull_request.gh_changed_files
+    pr_detail_info = DetailInfo.request_pull_details(token, url)
+    title = pr_detail_info["title"]
+    state = pr_detail_info["state"]
+    commits_num = pr_detail_info["commits"]
+    changed_files = pr_detail_info["changed_files"]
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Pull request: {}\n"
@@ -763,7 +765,7 @@ def query_handler(call):
                           .format(title,
                                   url,
                                   state,
-                                  comments_num,
+                                  commits_num,
                                   changed_files),
                           reply_markup=ans.back_to_menu_and_back_kb())
     update_user_state_with_session(call.message.chat.id, States.S_LOOK_PR_ALI, session)
@@ -878,7 +880,8 @@ def repos_adding(call):
             github_repos = GitHubRepos(tg_user_id=call.from_user.id,
                                        gh_reposname=gh_reposname,
                                        gh_repos_url=dict_data['html_url'],
-                                       gh_repos_description=dict_data['description'])
+                                       gh_repos_description="",  # deprecated
+                                       )
             session.add(github_repos)
             session.commit()
             update_user_state_with_session(call.from_user.id, States.S_ALI_REPOS_ENTER, session)
@@ -942,10 +945,12 @@ def pr_adding(call):
             pull_request = GitHubPullRequest(tg_user_id=call.from_user.id,
                                              gh_prid=gh_prid,
                                              gh_pr_url=dict_data['html_url'],
-                                             gh_pr_title=dict_data['title'],
-                                             gh_pr_state=dict_data['state'],
-                                             gh_commits=dict_data['commits'],
-                                             gh_changed_files=dict_data['changed_files'])
+                                             # fields below are deprecated
+                                             gh_pr_title="",
+                                             gh_pr_state="",
+                                             gh_commits=0,
+                                             gh_changed_files=0,
+                                             )
             session.add(pull_request)
             session.commit()
             update_user_state_with_session(call.from_user.id, States.S_ALI_PR_ENTER, session)
@@ -1067,10 +1072,11 @@ def query_handler(call):
     ).first()
 
     url = pull_request.gh_pr_url
-    title = pull_request.gh_pr_title
-    state = pull_request.gh_pr_state
-    commits_num = pull_request.gh_commits
-    changed_files = pull_request.gh_changed_files
+    pr_detail_info = DetailInfo.request_pull_details(token, url)
+    title = pr_detail_info["title"]
+    state = pr_detail_info["state"]
+    commits_num = pr_detail_info["commits"]
+    changed_files = pr_detail_info["changed_files"]
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Pull request: {}\n"

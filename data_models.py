@@ -31,8 +31,6 @@ class GitHubUsers(Base):
     tg_alias_user = Column(String)  # User-defined alias
     gh_user_url = Column(String)  # URL to request info about user
     login = Column(String)  # User login, needed to form URL for GitHub API
-    # TODO: do not hold fields below in data base,
-    #   get them with GitHub API by demand
     gh_username = Column(String)
     gh_user_avatar = Column(String)
 
@@ -46,11 +44,9 @@ class GitHubRepos(Base):
     id = Column(Integer, primary_key=True)
     tg_user_id = Column(Integer, ForeignKey('tg_users.tg_user_id'))
     tg_alias_repos = Column(String)  # User-defined alias
-    gh_repos_url = Column(String)  # URL to request info about repository
-    # TODO: do not hold fields below in data base,
-    #   get them with GitHub API by demand
-    gh_reposname = Column(String)
-    gh_repos_description = Column(String)
+    gh_repos_url = Column(String)
+    gh_reposname = Column(String)  # Repos full name
+    gh_repos_description = Column(String)  # deprecated
 
     # Relation
     tg_user = relationship("TgUser", back_populates="github_repos")
@@ -63,9 +59,8 @@ class GitHubPullRequest(Base):
     tg_user_id = Column(Integer, ForeignKey('tg_users.tg_user_id'))
     tg_alias_pr = Column(String)  # User-defined alias
     gh_pr_url = Column(String)  # URL to request info about repository
-    # TODO: do not hold fields below in data base,
-    #   get them with GitHub API by demand
     gh_prid = Column(Integer)
+    # Fields below are deprecated
     gh_pr_title = Column(String)
     gh_pr_state = Column(String)
     gh_commits = Column(Integer)
