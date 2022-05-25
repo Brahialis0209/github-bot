@@ -660,7 +660,7 @@ def query_handler(call):
 
     name = github_repos.gh_reposname
     url = github_repos.gh_repos_url
-    description = DetailInfo.request_repos_details(token, github_repos.gh_reposname)
+    description = DetailInfo.request_repos_details(token, url)
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Репозиторий: {}\n"
@@ -1022,7 +1022,7 @@ def query_handler(call):
 
     name = github_repos.gh_reposname
     url = github_repos.gh_repos_url
-    description = github_repos.gh_repos_description
+    description = DetailInfo.request_repos_details(token, url)
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Репозиторий: {}\n"

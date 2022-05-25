@@ -10,8 +10,16 @@ class DetailInfo:
     __status_code_success = 200
 
     @staticmethod
-    def request_repos_details(token, repos_full_name):
-        query_url = f"https://api.github.com/repos/{repos_full_name}"
+    def __repos_url_to_query(url):
+        """
+        url example: https://github.com/octocat/Hello-World
+        we need: https://api.github.com/repos/octocat/Hello-World
+        """
+        return url.replace('//github.com/', '//api.github.com/repos/')
+
+    @staticmethod
+    def request_repos_details(token, repos_url):
+        query_url = DetailInfo.__repos_url_to_query(repos_url)
         headers = {'Authorization': f'token {token}'}
         response = requests.get(query_url, headers=headers)
         if response.status_code == DetailInfo.__status_code_success:
@@ -28,7 +36,11 @@ class DetailInfo:
         url example: https://github.com/octocat/Hello-World/pull/1347
         we need: https://api.github.com/repos/octocat/Hello-World/pulls/1347
         """
-        return url.replace("//github.com/", "//api.github.com/")
+        return url.replace("//github.com/", "//api.github.com/repos/").replace(
+            '/pull/',
+            '/pulls/'
+        )
+
 
     @staticmethod
     def request_pull_details(token, url):
