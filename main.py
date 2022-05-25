@@ -57,7 +57,7 @@ def get_user_state(user_id):
 
 def get_user_state_with_session(user_id, session: Session):
     tg_user = session.query(TgUser).filter_by(tg_user_id=int(user_id)).first()
-    return -1 if tg_user is None else tg_user.tg_users_user_state
+    return -1 if tg_user is None else tg_user.user_state
 
 
 def delete_null_alias_from_users(user_id, session: Session):
