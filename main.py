@@ -937,10 +937,10 @@ def pr_adding(call):
                                   reply_markup=ans.back_to_previous_kb(repos_alias))
         else:
             dict_data = json.loads(r.text)
-            gh_prname = dict_data['id']
+            gh_prid = dict_data['id']
 
             pull_request = GitHubPullRequest(tg_user_id=call.from_user.id,
-                                             gh_prname=gh_prname,
+                                             gh_prid=gh_prid,
                                              gh_pr_url=dict_data['html_url'],
                                              gh_pr_title=dict_data['title'],
                                              gh_pr_state=dict_data['state'],
