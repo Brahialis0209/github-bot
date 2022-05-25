@@ -51,8 +51,9 @@ def update_user_state_with_session(user_id, state, session: Session):
 
 def get_user_state(user_id):
     session = Session(db_engine)
-    get_user_state_with_session(user_id, session)
+    user_state = get_user_state_with_session(user_id, session)
     finish_session(session)
+    return user_state
 
 
 def get_user_state_with_session(user_id, session: Session):
@@ -605,7 +606,7 @@ def query_handler(call):
 
 @bot.callback_query_handler(func=lambda call: (
         (
-                is_user_alias(call.data)
+                is_user_alias(call.data, call)
                 and get_user_state(call.message.chat.id) == States.S_ADD_REPOS  # repos control stream
                 and call.data.split(" ")[-1] != user_opts.User.back_cal)
         or (
