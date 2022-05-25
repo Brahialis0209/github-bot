@@ -9,11 +9,12 @@ import os
 import requests
 import json
 from telebot import types
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from data_models import Base, TgUser, GitHubUsers, GitHubRepos, GitHubPullRequest
 from detail_info import DetailInfo
+from data_base_accessor import DataBaseAccessor
 
 
 logger = telebot.logger
@@ -64,10 +65,7 @@ def get_user_state_with_session(user_id, session: Session):
 
 def delete_null_alias_from_users(user_id, session: Session):
     # Use "==" instead of "is" in comparison with None to properly construct SQL query
-    null_alias = session.query(GitHubUsers).filter_by(
-        tg_user_id=user_id,
-        tg_alias_user=None  # noqa
-    ).first()
+    null_alias = DataBaseAccessor.get_gh_user(user_id, alias=None, session=session)
     if null_alias is not None:
         session.delete(null_alias)
         session.commit()
@@ -76,10 +74,7 @@ def delete_null_alias_from_users(user_id, session: Session):
 
 def delete_null_alias_from_repos(user_id, session: Session):
     # Use "==" instead of "is" in comparison with None to properly construct SQL query
-    null_alias = session.query(GitHubRepos).filter_by(
-        tg_user_id=user_id,
-        tg_alias_repos=None  # noqa
-    ).first()
+    null_alias = DataBaseAccessor.get_repos(user_id, alias=None, session=session)
     if null_alias is not None:
         session.delete(null_alias)
         session.commit()
@@ -88,10 +83,7 @@ def delete_null_alias_from_repos(user_id, session: Session):
 
 def delete_null_alias_from_pull_requests(user_id, session: Session):
     # Use "==" instead of "is" in comparison with None to properly construct SQL query
-    null_alias = session.query(GitHubPullRequest).filter_by(
-        tg_user_id=user_id,
-        tg_alias_pr=None  # noqa
-    ).first()
+    null_alias = DataBaseAccessor.get_pull(user_id, alias=None, session=session)
     if null_alias is not None:
         session.delete(null_alias)
         session.commit()
@@ -664,10 +656,7 @@ def query_handler(call):
     user_id = call.message.chat.id
     session = Session(db_engine)
 
-    github_repos = session.query(GitHubRepos).filter_by(
-        tg_user_id=user_id,
-        tg_alias_repos=alias
-    ).first()
+    github_repos = DataBaseAccessor.get_repos(user_id, alias, session)
 
     name = github_repos.gh_reposname
     url = github_repos.gh_repos_url
@@ -700,10 +689,7 @@ def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
 
-    github_repos = session.query(GitHubRepos).filter_by(
-        tg_user_id=user_id,
-        tg_alias_repos=alias
-    ).first()
+    github_repos = DataBaseAccessor.get_repos(user_id, alias, session)
 
     name = github_repos.gh_reposname
     query_url = f"https://api.github.com/repos/{name}/pulls"
@@ -745,10 +731,7 @@ def query_handler(call):
     alias = ' '.join(call.data.split(" ")[:-1])
     user_id = call.message.chat.id
     session = Session(db_engine)
-    pull_request = session.query(GitHubPullRequest).filter_by(
-        tg_user_id=user_id,
-        tg_alias_pr=alias
-    ).first()
+    pull_request = DataBaseAccessor.get_pull(user_id, alias, session)
     url = pull_request.gh_pr_url
     pr_detail_info = DetailInfo.request_pull_details(token, url)
     title = pr_detail_info["title"]
@@ -808,7 +791,7 @@ def user_adding(message):
         session = Session(db_engine)
         github_user = session.query(GitHubUsers).filter_by(
             tg_user_id=message.from_user.id,
-            gh_username=name
+            gh_username=name,
         ).first()
         if github_user is not None:
             # Such user has already been added to the database
@@ -1012,10 +995,7 @@ def query_handler(call):
     alias = ' '.join(call.data.split(' ')[:-1])
 
     session = Session(db_engine)
-    github_user = session.query(GitHubUsers).filter_by(
-        tg_user_id=user_id,
-        tg_alias_user=alias
-    ).first()
+    github_user = DataBaseAccessor.get_gh_user(user_id, alias, session)
 
     name = github_user.gh_username
     url = github_user.gh_user_url
@@ -1038,10 +1018,7 @@ def query_handler(call):
     alias = ' '.join(call.data.split(' ')[:-1])
 
     session = Session(db_engine)
-    github_repos = session.query(GitHubRepos).filter_by(
-        tg_user_id=user_id,
-        tg_alias_repos=alias
-    ).first()
+    github_repos = DataBaseAccessor.get_repos(user_id, alias, session)
 
     name = github_repos.gh_reposname
     url = github_repos.gh_repos_url
@@ -1066,10 +1043,7 @@ def query_handler(call):
     alias = ' '.join(call.data.split(' ')[:-1])
 
     session = Session(db_engine)
-    pull_request = session.query(GitHubPullRequest).filter_by(
-        tg_user_id=user_id,
-        tg_alias_pr=alias
-    ).first()
+    pull_request = DataBaseAccessor.get_pull(user_id, alias, session)
 
     url = pull_request.gh_pr_url
     pr_detail_info = DetailInfo.request_pull_details(token, url)
@@ -1101,15 +1075,9 @@ def alias_adding(message):
     alias = ' '.join(message.text.split())
 
     session = Session(db_engine)
-    github_user = session.query(GitHubUsers).filter_by(
-        tg_user_id=user_id,
-        tg_alias_user=alias
-    ).first()
+    github_user = DataBaseAccessor.get_gh_user(user_id, alias, session)
     if github_user is None:
-        github_user = session.query(GitHubUsers).filter_by(
-            tg_user_id=user_id,
-            tg_alias_user=None  # noqa
-        ).first()
+        github_user = DataBaseAccessor.get_gh_user(user_id, alias=None, session=session)
         github_user.tg_alias_user = alias
         session.commit()
         update_user_state_with_session(message.from_user.id, States.S_ALI_USER_ADDED, session)
@@ -1128,16 +1096,9 @@ def alias_adding(message):
     alias = ' '.join(message.text.split())
 
     session = Session(db_engine)
-    github_repos = session.query(GitHubRepos).filter_by(
-        tg_user_id=user_id,
-        tg_alias_repos=alias
-    ).first()
-
+    github_repos = DataBaseAccessor.get_repos(user_id, alias, session)
     if github_repos is None:
-        github_repos = session.query(GitHubRepos).filter_by(
-            tg_user_id=user_id,
-            tg_alias_repos=None  # noqa
-        ).first()
+        github_repos = DataBaseAccessor.get_repos(user_id, alias=None, session=session)
         github_repos.tg_alias_repos = alias
         session.commit()
         update_user_state_with_session(message.from_user.id, States.S_ALI_REPOS_ADDED, session)
@@ -1162,16 +1123,9 @@ def alias_adding(message):
     alias = ' '.join(message.text.split())
 
     session = Session(db_engine)
-    pull_request = session.query(GitHubPullRequest).filter_by(
-        tg_user_id=user_id,
-        tg_alias_pr=alias
-    ).first()
-
+    pull_request = DataBaseAccessor.get_pull(user_id, alias, session)
     if pull_request is None:
-        pull_request = session.query(GitHubPullRequest).filter_by(
-            tg_user_id=user_id,
-            tg_alias_pr=None  # noqa
-        ).first()
+        pull_request = DataBaseAccessor.get_pull(user_id, alias=None, session=session)
         pull_request.tg_alias_pr = alias
         session.commit()
         update_user_state_with_session(message.from_user.id, States.S_ALI_PR_ADDED, session)
