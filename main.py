@@ -660,7 +660,7 @@ def query_handler(call):
 
     name = github_repos.gh_reposname
     url = github_repos.gh_repos_url
-    description = DetailInfo.request_repos_details(token, url)
+    description = github_repos.gh_repos_description
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Репозиторий: {}\n"
@@ -863,7 +863,7 @@ def repos_adding(call):
             github_repos = GitHubRepos(tg_user_id=call.from_user.id,
                                        gh_reposname=gh_reposname,
                                        gh_repos_url=dict_data['html_url'],
-                                       gh_repos_description="",  # deprecated
+                                       gh_repos_description=dict_data['description'],
                                        )
             session.add(github_repos)
             session.commit()
@@ -1022,7 +1022,7 @@ def query_handler(call):
 
     name = github_repos.gh_reposname
     url = github_repos.gh_repos_url
-    description = DetailInfo.request_repos_details(token, url)
+    description = github_repos.gh_repos_description
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Репозиторий: {}\n"

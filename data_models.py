@@ -46,7 +46,7 @@ class GitHubRepos(Base):
     tg_alias_repos = Column(String)  # User-defined alias
     gh_repos_url = Column(String)
     gh_reposname = Column(String)  # Repos full name
-    gh_repos_description = Column(String)  # deprecated
+    gh_repos_description = Column(String)
 
     # Relation
     tg_user = relationship("TgUser", back_populates="github_repos")
