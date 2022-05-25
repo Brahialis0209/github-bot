@@ -65,11 +65,11 @@ class GitHubPullRequest(Base):
     gh_pr_url = Column(String)  # URL to request info about repository
     # TODO: do not hold fields below in data base,
     #   get them with GitHub API by demand
-    gh_prid = Column(String)
+    gh_prid = Column(Integer)
     gh_pr_title = Column(String)
     gh_pr_state = Column(String)
-    gh_commits = Column(String)
-    gh_changed_files = Column(String)
+    gh_commits = Column(Integer)
+    gh_changed_files = Column(Integer)
 
     # Relation
     tg_user = relationship("TgUser", back_populates="github_pull_request")
