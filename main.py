@@ -58,6 +58,7 @@ def get_user_state(user_id):
 def get_user_state_with_session(user_id, session: Session):
     tg_user = session.query(TgUser).filter_by(tg_user_id=int(user_id)).first()
     print(-1 if tg_user is None else tg_user.user_state)
+    print(type(-1 if tg_user is None else tg_user.user_state))
     return -1 if tg_user is None else tg_user.user_state
 
 
