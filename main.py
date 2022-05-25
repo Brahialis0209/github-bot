@@ -58,8 +58,6 @@ def get_user_state(user_id):
 
 def get_user_state_with_session(user_id, session: Session):
     tg_user = session.query(TgUser).filter_by(tg_user_id=int(user_id)).first()
-    print(-1 if tg_user is None else tg_user.user_state)
-    print(type(-1 if tg_user is None else tg_user.user_state))
     return -1 if tg_user is None else tg_user.user_state
 
 
@@ -570,16 +568,12 @@ def query_handler(call):
 
 # ----------------------------------------------------------------------------------------------
 #  we pick alias from our history list
-def is_user_alias(data, call):
-    print(data)
-    print(User.user_alias_cal in data.split(' '))
-    print(data.split(" ")[-1] != user_opts.User.back_cal)
-    print(get_user_state(call.message.chat.id) == States.S_CHOOSE_USER)
+def is_user_alias(data):
     return User.user_alias_cal in data.split(' ')
 
 
 @bot.callback_query_handler(func=lambda call: (
-        is_user_alias(call.data, call)
+        is_user_alias(call.data)
         and (get_user_state(call.message.chat.id) == States.S_CHOOSE_USER
              or get_user_state(call.message.chat.id) == States.S_ALI_USER_ADDED)  # user control branch
         and call.data.split(" ")[-1] != user_opts.User.back_cal))
@@ -606,7 +600,7 @@ def query_handler(call):
 
 @bot.callback_query_handler(func=lambda call: (
         (
-                is_user_alias(call.data, call)
+                is_user_alias(call.data)
                 and get_user_state(call.message.chat.id) == States.S_ADD_REPOS  # repos control stream
                 and call.data.split(" ")[-1] != user_opts.User.back_cal)
         or (
