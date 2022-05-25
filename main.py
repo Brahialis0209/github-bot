@@ -588,7 +588,7 @@ def query_handler(call):
     ).first()
 
     name = github_user.gh_username
-    url = github_user.hg_user_url
+    url = github_user.gh_user_url
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
                           text="🔘 Имя: {}\n"
